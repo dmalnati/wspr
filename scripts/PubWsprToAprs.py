@@ -5,10 +5,8 @@ import subprocess
 import time
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', ''))
-from myLib.utl import *
+from libCore import *
 
-from libDbWSPR import *
 from libWsprToAprsBridge import *
 
 
@@ -26,9 +24,9 @@ class App:
         Log("")
         
         # get handles to database
-        self.db  = DatabaseWSPR()
-        self.td  = self.db.GetTableDownload()
-        self.tnv = self.db.GetTableNameValue()
+        self.db  = Database()
+        self.td  = self.db.GetTable("DOWNLOAD")
+        self.tnv = self.db.GetTable("NAME_VALUE")
         
         # get bridge
         self.bridge = WsprToAprsBridge(user, password, debug)

@@ -5,13 +5,7 @@ import subprocess
 import time
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', ''))
-from myLib.utl import *
-
-from libDbWSPR import *
-
-from bs4 import BeautifulSoup
-
+from libCore import *
 
 
 class App:
@@ -21,8 +15,8 @@ class App:
         self.batchSize   = batchSize
         
         # Access database
-        self.db  = DatabaseWSPR()
-        self.t   = self.db.GetTableDownload()
+        self.db  = Database()
+        self.t   = self.db.GetTable("DOWNLOAD")
         
         Log("Configured for:")
         Log("  hoursToKeep = %s" % self.hoursToKeep)

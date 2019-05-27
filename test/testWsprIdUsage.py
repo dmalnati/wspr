@@ -3,13 +3,13 @@
 import os
 import sys
 
-from libDbWSPR import *
+from libCore import *
 
 
 def Main():
     # Access database
-    db  = DatabaseWSPR()
-    t   = db.GetTableDownload()
+    db  = Database()
+    t   = db.GetTable("DOWNLOAD")
     rec = t.GetRecordAccessor()
 
     # Search for all callsigns

@@ -5,19 +5,15 @@ import subprocess
 import time
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', ''))
-from myLib.utl import *
-
-from libDbWSPR import *
-
+from libCore import *
 
 class App:
     def __init__(self, intervalSec):
         self.intervalSec = intervalSec
         
         # get handles to database
-        self.db  = DatabaseWSPR()
-        self.td  = self.db.GetTableDownload()
+        self.db  = Database()
+        self.td  = self.db.GetTable("DOWNLOAD")
 
         self.rowIdLast = self.td.GetHighestRowId() - 20
         
