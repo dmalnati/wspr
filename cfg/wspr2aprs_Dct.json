@@ -1,0 +1,43 @@
+{
+    "tableList" : [
+        {
+            "name" : "DOWNLOAD",
+
+            "fieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI"
+            ],
+
+            "uniqueKeyFieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI"
+            ],
+
+            "indexList" : [
+                [
+                    "CALLSIGN"
+                ]
+            ]
+        }
+    ]
+}
