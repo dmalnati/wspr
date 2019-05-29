@@ -8,21 +8,47 @@ import sys
 from libCore import *
 
 
-class App:
+class App(WSApp):
     def __init__(self, hoursToKeep, intervalSec, batchSize):
+        WSApp.__init__(self)
+        
         self.hoursToKeep = hoursToKeep
         self.intervalSec = intervalSec
         self.batchSize   = batchSize
-        
-        # Access database
-        self.db  = Database()
-        self.t   = self.db.GetTable("DOWNLOAD")
         
         Log("Configured for:")
         Log("  hoursToKeep = %s" % self.hoursToKeep)
         Log("  intervalSec = %s" % self.intervalSec)
         Log("  batchSize   = %s" % self.batchSize)
         Log("")
+        
+        self.db = ManagedDatabase(self)
+
+        
+    def Run(self):
+        Log("Waiting for Database Available to begin")
+        Log("")
+        
+        self.db.SetCbOnDatabaseStateChange(self.OnDatabaseStateChange)
+        
+        evm_MainLoop()
+
+        
+    def OnDatabaseAvaiable(self):
+        Log("Database Available, starting")
+        self.t = self.db.GetTable("DOWNLOAD")
+        
+        evm_SetTimeout(self.OnTimeout, 0)
+
+    def OnDatabaseClosing(self):
+        Log("Database Closing, no action taken")
+        
+    def OnDatabaseStateChange(self, dbState):
+        if dbState == "DATABASE_AVAILABLE":
+            self.OnDatabaseAvaiable()
+        if dbState == "DATABASE_CLOSING":
+            self.OnDatabaseClosing()
+
 
     def GetDataAtUrl(self, url):
         byteList = subprocess.check_output(['wget', '-qO-', url])
@@ -212,25 +238,6 @@ class App:
         Log("")
         
         evm_SetTimeout(self.OnTimeout, timeoutMs)
-        
-    def OnStdIn(self, str):
-        pass
-        
-    def Run(self):
-        def OnStdIn(inputStr):
-            inputStr = inputStr.strip()
-
-            if inputStr != "":
-                self.OnKeyboardReadable(inputStr)
-            
-        WatchStdinEndLoopOnEOF(OnStdIn, binary=True)
-
-        evm_SetTimeout(self.OnTimeout, 0)
-        
-        Log("Running")
-        Log("")
-        
-        evm_MainLoop()
 
     
     

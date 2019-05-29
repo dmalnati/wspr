@@ -1,0 +1,17 @@
+{ "processDetailsList" : [
+
+
+{
+    "name" : "WSPR2APRS_SUB_WSPRNET",
+    "desc" : "Sub %W2A_SUB_HOURS_TO_KEEP% hr, %W2A_SUB_INTERVAL_SEC% sec, %W2A_SUB_BATCH_SIZE% batch",
+    "cmd"  : "wspr2aprs_SubWsprnet.py %W2A_SUB_HOURS_TO_KEEP% %W2A_SUB_INTERVAL_SEC% %W2A_SUB_BATCH_SIZE%"
+}
+,
+{
+    "name" : "WSPR2APRS_PUB_APRS",
+    "desc" : "Pub to APRS %W2A_PUB_INTERVAL_SEC% %W2A_PUB_START_MODE% %W2A_PUB_DEBUG%",
+    "cmd" : "wspr2aprs_PubWsprToAprs.py %W2A_PUB_APRS_USER% %W2A_PUB_APRS_PASS% %W2A_PUB_INTERVAL_SEC% %W2A_PUB_START_MODE% %W2A_PUB_DEBUG%"
+}
+
+
+] }

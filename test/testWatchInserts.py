@@ -7,16 +7,42 @@ import sys
 
 from libCore import *
 
-class App:
+
+class App(WSApp):
     def __init__(self, intervalSec):
+        WSApp.__init__(self)
+
         self.intervalSec = intervalSec
         
         # get handles to database
-        self.db  = Database()
-        self.td  = self.db.GetTable("DOWNLOAD")
+        self.db = ManagedDatabase(self)
 
+    def Run(self):
+        Log("Waiting for Database Available to begin")
+        Log("")
+        
+        self.db.SetCbOnDatabaseStateChange(self.OnDatabaseStateChange)
+        
+        evm_MainLoop()
+
+    def OnDatabaseAvaiable(self):
+        Log("Database Available, starting")
+
+        self.td        = self.db.GetTable("DOWNLOAD")
         self.rowIdLast = self.td.GetHighestRowId() - 20
         
+        evm_SetTimeout(self.OnTimeout, 0)
+
+
+    def OnDatabaseClosing(self):
+        Log("Database Closing, exiting")
+        
+    def OnDatabaseStateChange(self, dbState):
+        if dbState == "DATABASE_AVAILABLE":
+            self.OnDatabaseAvaiable()
+        if dbState == "DATABASE_CLOSING":
+            self.OnDatabaseClosing()
+
     def CheckForUpdates(self):
         # Prepare to walk records
         recTd = self.td.GetRecordAccessor()
@@ -35,20 +61,6 @@ class App:
         timeoutMs = self.intervalSec * 1000
         
         evm_SetTimeout(self.OnTimeout, timeoutMs)
-        
-    
-    def Run(self):
-        def OnStdIn(inputStr):
-            inputStr = inputStr.strip()
-
-            if inputStr != "":
-                self.OnKeyboardReadable(inputStr)
-            
-        WatchStdinEndLoopOnEOF(OnStdIn, binary=True)
-
-        evm_SetTimeout(self.OnTimeout, 0)
-        
-        evm_MainLoop()
 
     
     

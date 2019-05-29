@@ -98,6 +98,11 @@ def Main():
     
     # Access database
     db  = Database()
+
+    if not db.Connect():
+        Log("Could not connect to the database")
+        sys.exit(1)
+
     t   = db.GetTable("DOWNLOAD")
     rec = t.GetRecordAccessor()
 

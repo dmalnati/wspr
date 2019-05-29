@@ -10,36 +10,70 @@ from libCore import *
 from libWsprToAprsBridge import *
 
 
-class App:
+class App(WSApp):
     def __init__(self, user, password, intervalSec, startMode, debug):
+        WSApp.__init__(self)
+
         # Basic object configuration
+        self.user        = user
+        self.password    = password
         self.intervalSec = intervalSec
-        
+        self.startMode   = startMode
+        self.debug       = debug
+
         Log("Configured for:")
-        Log("  debug       = %s" % debug)
-        Log("  user        = %s" % user)
-        Log("  password    = %s" % password)
-        Log("  intervalSec = %s" % intervalSec)
-        Log("  startMode   = %s" % startMode)
+        Log("  debug       = %s" % self.debug)
+        Log("  user        = %s" % self.user)
+        Log("  password    = %s" % self.password)
+        Log("  intervalSec = %s" % self.intervalSec)
+        Log("  startMode   = %s" % self.startMode)
         Log("")
         
         # get handles to database
-        self.db  = Database()
+        self.db  = ManagedDatabase(self)
+
+
+    def Run(self):
+        Log("Waiting for Database Available to begin")
+        Log("")
+        
+        self.db.SetCbOnDatabaseStateChange(self.OnDatabaseStateChange)
+        
+        evm_MainLoop()
+
+
+    def OnDatabaseAvaiable(self):
+        Log("Database Available, starting")
+
         self.td  = self.db.GetTable("DOWNLOAD")
         self.tnv = self.db.GetTable("NAME_VALUE")
         
         # get bridge
-        self.bridge = WsprToAprsBridge(user, password, debug)
+        self.bridge = WsprToAprsBridge(self.user, self.password, self.debug)
         
         # handle cold start
-        if startMode == "cold":
+        if self.startMode == "cold":
             rowIdLast = self.GetLast()
             
             Log("    Resetting last processed to -1 from %s" % rowIdLast)
             Log("")
             
             self.SetLast(-1)
+
+        evm_SetTimeout(self.OnTimeout, 0)
         
+        self.bridge.Start()
+
+    def OnDatabaseClosing(self):
+        Log("Database Closing, no action taken")
+        
+    def OnDatabaseStateChange(self, dbState):
+        if dbState == "DATABASE_AVAILABLE":
+            self.OnDatabaseAvaiable()
+        if dbState == "DATABASE_CLOSING":
+            self.OnDatabaseClosing()
+
+
     def GetLast(self):
         rec = self.tnv.GetRecordAccessor()
         if self.tnv.Count() == 0:
@@ -113,28 +147,6 @@ class App:
         
         evm_SetTimeout(self.OnTimeout, timeoutMs)
         
-    def OnStdIn(self, str):
-        pass
-        
-    def Run(self):
-        def OnStdIn(inputStr):
-            inputStr = inputStr.strip()
-
-            if inputStr != "":
-                self.OnKeyboardReadable(inputStr)
-            
-        WatchStdinEndLoopOnEOF(OnStdIn, binary=True)
-
-        evm_SetTimeout(self.OnTimeout, 0)
-        
-        self.bridge.Start()
-        
-        Log("Running")
-        Log("")
-        
-        evm_MainLoop()
-
-    
     
 
 def Main():

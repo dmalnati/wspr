@@ -6,9 +6,10 @@ import sys
 from libCore import *
 
 
-def Main():
-    # Access database
-    db  = Database()
+
+db = Database()
+
+def DoScan():
     t   = db.GetTable("DOWNLOAD")
     rec = t.GetRecordAccessor()
 
@@ -51,6 +52,14 @@ def Main():
     print("%s / %s in scan" % (Commas(countInScan), Commas(countSeen)))
     for id in idList:
         print("%s - %5s" % (id, Commas(id__count[id])))
+
+
+def Main():
+    # Access database
+    if db.Connect():
+        DoScan()
+    else:
+        print("Could not connected to Database")
     
     
 Main()

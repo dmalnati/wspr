@@ -1,0 +1,18 @@
+{
+
+    "#":"Subscriber-specific parameters",
+
+    "W2A_SUB_HOURS_TO_KEEP" : "120",
+    "W2A_SUB_INTERVAL_SEC"  : "30",
+    "W2A_SUB_BATCH_SIZE"    : "2000",
+
+    
+    "#":"Subscriber-specific parameters",
+
+    "W2A_PUB_APRS_USER"    : "fakeUsr",
+    "W2A_PUB_APRS_PASS"    : "fakePass",
+    "W2A_PUB_INTERVAL_SEC" : "30",
+    "W2A_PUB_START_MODE"   : "warm",
+    "W2A_PUB_DEBUG"        : "debug"
+
+}
