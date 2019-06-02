@@ -84,7 +84,7 @@ class App(WSApp):
         Log("Parsing downloaded file")
         timeStart = DateTimeNow()
         
-        lineList = byteList.split("\n")
+        lineList = byteList.decode().splitlines()
         
         for line in lineList:
             if line.find("&nbsp;") != -1:
