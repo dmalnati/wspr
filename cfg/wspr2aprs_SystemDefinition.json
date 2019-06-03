@@ -7,7 +7,14 @@
     "W2A_SUB_BATCH_SIZE"    : "2000",
 
     
-    "#":"Subscriber-specific parameters",
+    "#":"Filter/Decoder-specific parameters",
+
+    "W2A_FD_INTERVAL_SEC" : "30",
+    "W2A_FD_START_MODE"   : "warm",
+    "W2A_FD_DEBUG"        : "",
+
+    
+    "#":"Publisher-specific parameters",
 
     "W2A_PUB_APRS_USER"    : "fakeUsr",
     "W2A_PUB_APRS_PASS"    : "fakePass",

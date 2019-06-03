@@ -36,7 +36,7 @@ class App(WSApp):
         
     def OnDatabaseAvaiable(self):
         Log("Database Available, starting")
-        self.t = self.db.GetTable("DOWNLOAD")
+        self.t = self.db.GetTable("WSPR_DOWNLOAD")
         
         evm_SetTimeout(self.OnTimeout, 0)
 

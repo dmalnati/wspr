@@ -1,7 +1,7 @@
 {
     "tableList" : [
         {
-            "name" : "DOWNLOAD",
+            "name" : "WSPR_DOWNLOAD",
 
             "fieldList" : [
                 "DATE",
@@ -36,6 +36,93 @@
             "indexList" : [
                 [
                     "CALLSIGN"
+                ]
+            ]
+        }
+        ,
+        {
+            "name" : "WSPR_ALL_BALLOON_TELEMETRY",
+
+            "fieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI"
+            ],
+
+            "uniqueKeyFieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI"
+            ],
+
+            "indexList" : [
+                [
+                    "CALLSIGN"
+                ]
+            ]
+        }
+        ,
+        {
+            "name" : "WSPR_DECODED",
+
+            "fieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI",
+                
+                "CALLSIGN_DECODED",
+                "SPEED_MPH",
+                "ALTITUDE_FT",
+                "GRID_DECODED",
+                "TEMPERATURE_C",
+                "VOLTAGE"
+            ],
+
+            "uniqueKeyFieldList" : [
+                "DATE",
+                "CALLSIGN",
+                "FREQUENCY",
+                "SNR",
+                "DRIFT",
+                "GRID",
+                "DBM",
+                "WATTS",
+                "REPORTER",
+                "RGRID",
+                "KM",
+                "MI"
+            ],
+
+            "indexList" : [
+                [
+                    "CALLSIGN_DECODED"
                 ]
             ]
         }

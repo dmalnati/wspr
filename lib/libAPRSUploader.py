@@ -35,7 +35,7 @@ class APRSUploader:
             url \
         ]
         
-        #Log(" ".join(procAndArgs))
+        Log(" ".join(procAndArgs))
         retVal = False
         try:
             if not self.debug:

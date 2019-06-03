@@ -103,7 +103,7 @@ def Main():
         Log("Could not connect to the database")
         sys.exit(1)
 
-    t   = db.GetTable("DOWNLOAD")
+    t   = db.GetTable("WSPR_DOWNLOAD")
     rec = t.GetRecordAccessor()
 
     timeStart = DateTimeNow()

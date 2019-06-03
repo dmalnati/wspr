@@ -14,13 +14,13 @@ class WSPRDecoder:
     def __init__(self):
         pass
         
-    def IsEligibleForUpload(self, name__value):
+    def CanBeDecoded(self, name__value):
         retVal = False
         
         call = self.GetDecodedCallsign(name__value)
         if call == "KD2KDD":
             retVal = True
-        
+            
         return retVal
         
     def DecodeList(self, nvList):
@@ -68,7 +68,7 @@ class WSPRDecoder:
             
         if id == "Q2":
             retVal = "KD2KDD"
-        
+            
         return retVal
     
     def GetDecodedSpeedMph(self, name__value):
