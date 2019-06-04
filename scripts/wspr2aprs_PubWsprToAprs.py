@@ -125,6 +125,11 @@ class WsprToAprsBridge:
 #
 # KD2KDD-15>WSPR,TCPIP*:/202600h4042.53N/07404.91WO000/064/A=013500 -22F 3.0V 50mi QJ2XRH 2 16 118 0
     def OnAllUpdatesThisPeriodComplete(self):
+        if len(self.nvList):
+            self.OnAllUpdatesThisPeriodCompleteInternal()
+            self.dateLast = ""
+    
+    def OnAllUpdatesThisPeriodCompleteInternal(self):
         self.cbFnOnPeriodComplete(self.dateLast)
     
         # convert all cached
@@ -151,7 +156,7 @@ class WsprToAprsBridge:
             #   frequency at best SNR
             distMiMax    = 0
             reporterBest = "UNKN"
-            snrMax       = 0
+            snrMax       = -99
             freqBest     = 0
             for name__value in nvList:
                 distMi = int(name__value["MI"])
@@ -335,6 +340,9 @@ class App(WSApp):
         
         # send to bridge
         self.bridge.OnUpdate(name__value)
+        
+    def OnBatchComplete(self):
+        self.bridge.OnAllUpdatesThisPeriodComplete()
 
     def Process(self):
         Log("Scanning WSPR_DECODED for new spots")
@@ -351,6 +359,7 @@ class App(WSApp):
         while rec.ReadNextInLinearScan():
             count += 1
             self.OnUpdate(rec)
+        self.OnBatchComplete()
         
         timeEnd = DateTimeNow()
         secDiff = DateTimeStrDiffSec(timeEnd, timeStart)
