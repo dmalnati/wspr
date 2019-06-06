@@ -9,12 +9,13 @@ from libCore import *
 
 
 class App(WSApp):
-    def __init__(self, hoursToKeep, intervalSec, batchSize):
+    def __init__(self, hoursToKeep, intervalSec, batchSize, firstBatchSize):
         WSApp.__init__(self)
         
-        self.hoursToKeep = hoursToKeep
-        self.intervalSec = intervalSec
-        self.batchSize   = batchSize
+        self.hoursToKeep         = hoursToKeep
+        self.intervalSec         = intervalSec
+        self.batchSize           = firstBatchSize
+        self.subsequentBatchSize = batchSize
         
         Log("Configured for:")
         Log("  hoursToKeep = %s" % self.hoursToKeep)
@@ -50,8 +51,13 @@ class App(WSApp):
             self.OnDatabaseClosing()
 
 
-    def GetDataAtUrl(self, url):
-        byteList = subprocess.check_output(['wget', '-qO-', url])
+    def GetDataAtUrl(self, url, timeoutSecs = 60):
+        byteList = bytearray()
+        
+        try:
+            byteList = subprocess.check_output(['wget', '-T', str(timeoutSecs), '-qO-', url])
+        except Exception as e:
+            Log("Could not download url (%s): %s" % (url, e))
         
         return byteList
         
@@ -214,7 +220,11 @@ class App(WSApp):
         Log("  Download took %i seconds -- %s bytes" % (secDiff, Commas(len(byteList))))
         Log("")
         
-        self.ParseAndStoreWsprSpotFromOldDatabaseHtml(byteList)
+        if len(byteList):
+            Log("Parsing data")
+            self.ParseAndStoreWsprSpotFromOldDatabaseHtml(byteList)
+        else:
+            Log("No data to parse")
         
         #exit()
     
@@ -237,6 +247,8 @@ class App(WSApp):
         Log("  Waking again in %s sec" % (timeoutMs // 1000))
         Log("")
         
+        self.batchSize = self.subsequentBatchSize
+
         evm_SetTimeout(self.OnTimeout, timeoutMs)
 
     
@@ -246,12 +258,13 @@ def Main():
     LogIncludeDate(True)
     
     # default arguments
-    hoursToKeep = 24
-    intervalSec = 30
-    batchSize   = 2000
+    hoursToKeep    = 24
+    intervalSec    = 30
+    batchSize      = 2000
+    firstBatchSize = 50000
 
     if len(sys.argv) > 4 or (len(sys.argv) >= 2 and sys.argv[1] == "--help"):
-        print("Usage: %s <hoursToKeep=%s> <intervalSec=%s> <batchSize=%s>" % (sys.argv[0], hoursToKeep, intervalSec, batchSize))
+        print("Usage: %s <hoursToKeep=%s> <intervalSec=%s> <batchSize=%s> <firstBatchSize=%s>" % (sys.argv[0], hoursToKeep, intervalSec, batchSize, firstBatchSize))
         sys.exit(-1)
 
     # pull out arguments
@@ -264,8 +277,11 @@ def Main():
     if len(sys.argv) >= 4:
         batchSize = int(sys.argv[3])
     
+    if len(sys.argv) >= 5:
+        batchSize = int(sys.argv[4])
+    
     # create and run app
-    app = App(hoursToKeep, intervalSec, batchSize)
+    app = App(hoursToKeep, intervalSec, batchSize, firstBatchSize)
     app.Run()
 
 
