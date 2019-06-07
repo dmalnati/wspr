@@ -1,5 +1,6 @@
 from libWeb import *
 from libGeolocation import *
+from libTimeAndTimeZone import *
 
 
 webHandler = None
@@ -11,10 +12,11 @@ webHandler = None
 
 
 
-
 class WSSpotQuery(WSEventHandler):
     def __init__(self, db):
         self.db = db
+        self.t = self.db.GetTable("WSPR_DECODED")
+        self.tatz = TimeAndTimeZone()
         
     def OnWSConnectIn(self, ws):
         # I don't think I care yet, wait for message
@@ -25,29 +27,8 @@ class WSSpotQuery(WSEventHandler):
         pass
 
     def OnMessage(self, ws, msg):
-        # look at request and do query
-        #dateTimeGte = msg["DATE_TIME_GTE"]
-        #dateTimeLte = msg["DATE_TIME_LTE"]
-        #callsign    = msg["CALLSIGN"]
+        clientTimeZone = msg["TIMEZONE"]
         
-        # return data between those date ranges
-        # if either end is blank, no limit.
-        # for the lower end, that means go back indefinitely far.
-        # for the upper end, that means set timer to check back periodically for more.
-        
-        # return data as
-        # {
-        #      "TIME" : ...
-        #      "LATITUDE",
-        #      "LONGITUDE"
-        #      "REPORTER_CALLSIGN",
-        #      "REPORTER_LATITUDE"
-        #      "REPORTER_LONGITUDE"
-        # }
-        # 
-
-        t = self.db.GetTable("WSPR_DECODED")
-        rec = t.GetRecordAccessor()
         
         
         
@@ -76,20 +57,31 @@ class WSSpotQuery(WSEventHandler):
         geo = Geolocation()
         
         spotList = []
+        
+        
+        rec = self.t.GetRecordAccessor()
         while rec.ReadNextInLinearScan():
         
+            formatStrParse = "%Y-%m-%d %H:%M"
+            formatStrSend  = "%Y-%m-%d %H:%M:%S"
+
+            # convert UTC timestamps to the timezone of the client
+            self.tatz.SetTime(rec.Get("DATE"), formatStrParse, "UTC")
+            timeConverted = self.tatz.GetTimeNativeInTimeZone(clientTimeZone).strftime(formatStrSend)
+            
             lat, lng = geo.ConvertGridToLatLngDecimal(rec.Get("GRID_DECODED"))
             rLat, rLng = geo.ConvertGridToLatLngDecimal(rec.Get("RGRID"))
         
             spotList.append({
-                "TIME": rec.Get("DATE"),
+                "TIME_ORIG": rec.Get("DATE"),
+                "TIME": timeConverted,
                 "LAT" : lat,
                 "LNG" : lng,
                 "REPORTER": rec.Get("REPORTER"),
                 "RLAT" : rLat,
                 "RLNG" : rLng,
             })
-            
+        
         ws.Write(spotList)
     
     

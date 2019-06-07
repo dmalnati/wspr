@@ -20,6 +20,51 @@
 'use strict'
 
 
+
+
+class Spot
+{
+    constructor(spotData)
+    {
+        this.spotData = spotData;
+    }
+
+    GetTime()
+    {
+        return this.spotData['TIME'];
+    }
+
+    GetReporterPoint()
+    {
+        return { lat: this.spotData['RLAT'], lng: this.spotData['RLNG'] };
+    }
+
+    GetTransmitterPoint()
+    {
+        return { lat: this.spotData['LAT'], lng: this.spotData['LNG'] };
+    }
+}
+
+class TxEvent
+{
+    constructor()
+    {
+        this.time     = null;
+        this.spotList = [];
+    }
+
+    SetTime(time)
+    {
+        this.time = time;
+    }
+
+    AddSpot(spot)
+    {
+        this.spotList.push(spot);
+    }
+}
+
+
 class SpotMap extends WSEventHandler
 {
     constructor(idContainer)
@@ -35,6 +80,9 @@ class SpotMap extends WSEventHandler
         this.initialZoom           = 5;
         
         this.ws = null;
+
+        // Organize spots
+        this.time__txEvent = {};
     }
 
     Start()
@@ -88,7 +136,9 @@ class SpotMap extends WSEventHandler
     OnConnect(ws)
     {
         console.log("OnConnect");
-        ws.Write({"HI":"THERE"});
+        ws.Write({
+            "TIMEZONE" : Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
     }
 
     OnMessage(ws, msg)
@@ -96,22 +146,39 @@ class SpotMap extends WSEventHandler
         console.log("OnMessage");
         console.log(msg);
         
-        let spotList = msg;
-        for (let spot of spotList)
+        let spotDataList = msg;
+        for (let spotData of spotDataList)
         {
-            let rLat = spot["RLAT"];
-            let rLng = spot["RLNG"];
+            let rLat = spotData["RLAT"];
+            let rLng = spotData["RLNG"];
             
             let point1 = {lat: rLat, lng: rLng};
             this.AddMarker(point1);
             
-            let lat = spot["LAT"];
-            let lng = spot["LNG"];
+            let lat = spotData["LAT"];
+            let lng = spotData["LNG"];
             
             let point2 = { lat: lat, lng: lng };
             this.AddMarker(point2);
             
             this.AddLine(point1, point2);
+
+
+            // Organize spot data
+            let spot = new Spot(spotData);
+
+            let time = spot.GetTime();
+            if (!(time in this.time__txEvent))
+            {
+                let txEvent = new TxEvent();
+                txEvent.SetTime(time);
+
+                this.time__txEvent[time] = txEvent;
+            }
+
+            let txEvent = this.time__txEvent[time];
+
+            txEvent.AddSpot(spot);
         }
         
     }
