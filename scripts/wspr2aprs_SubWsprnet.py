@@ -127,7 +127,7 @@ class App(WSApp):
         # wipe out all the old records
         ONE_HOUR_IN_SECONDS = 60 * 60
         durationToKeepInSeconds = ONE_HOUR_IN_SECONDS * self.hoursToKeep
-        Log("Removing records older than 1 hour")
+        Log("Removing records older than %s hour(s)" % self.hoursToKeep)
 
         timeStart = DateTimeNow()
         timeNow = timeStart
@@ -163,22 +163,29 @@ class App(WSApp):
             
             valList = row
             
-            rec.Set("DATE",      valList[0])
-            rec.Set("CALLSIGN",  valList[1])
-            rec.Set("FREQUENCY", valList[2])
-            rec.Set("SNR",       valList[3])
-            rec.Set("DRIFT",     valList[4])
-            rec.Set("GRID",      valList[5])
-            rec.Set("DBM",       valList[6])
-            rec.Set("WATTS",     valList[7])
-            rec.Set("REPORTER",  valList[8])
-            rec.Set("RGRID",     valList[9])
-            rec.Set("KM",        valList[10])
-            rec.Set("MI",        valList[11])
+            doInsert = False
+            try:
+                rec.Set("DATE",      valList[0])
+                rec.Set("CALLSIGN",  valList[1])
+                rec.Set("FREQUENCY", valList[2])
+                rec.Set("SNR",       valList[3])
+                rec.Set("DRIFT",     valList[4])
+                rec.Set("GRID",      valList[5])
+                rec.Set("DBM",       valList[6])
+                rec.Set("WATTS",     valList[7])
+                rec.Set("REPORTER",  valList[8])
+                rec.Set("RGRID",     valList[9])
+                rec.Set("KM",        valList[10])
+                rec.Set("MI",        valList[11])
+                
+                doInsert = True
+            except Exception as e:
+                Log("ERR: Unable to populate record: %s" % e)
+                Log("ERR: Row: \"%s\"" % row)
             
-            #if rec.Read() == False:
-            if rec.Insert():
-                insertCount += 1
+            if doInsert:
+                if rec.Insert():
+                    insertCount += 1
         
         self.db.BatchEnd()
         
