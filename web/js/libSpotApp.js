@@ -229,6 +229,7 @@ class SpotMap
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+
 export
 class Dashboard
 {
@@ -248,6 +249,7 @@ class Dashboard
         console.log("Load");
         
         let scriptSrc = 'https://www.gstatic.com/charts/loader.js';
+
         
         let readyFn;
         let promise = new Promise((ready) => {
@@ -255,7 +257,7 @@ class Dashboard
         });
         
         libLoad.LoadScriptAsPromise(scriptSrc).then(() => {
-            console.log("Google Charts Loader loaded, creating dashboard");
+            console.log("Charts Loader loaded");
             
             // Load the Visualization API and the controls package.
             google.charts.load('current', {'packages':['corechart', 'controls']});
@@ -265,7 +267,6 @@ class Dashboard
                 this.OnLoaded();
                 readyFn();
             });
-
         });
         
         return promise;
@@ -299,11 +300,12 @@ class Dashboard
     {
         console.log("Chart libraries loaded");
         
+        
         this.BuildDataTable();
         this.BuildRealtimeCharts();
         this.BuildDerivativeCharts();
         
-        this.DrawInternal();
+        //this.DrawInternal();
     }
     
     BuildDataTable()
@@ -376,7 +378,7 @@ class Dashboard
                 //    type: 'datetime',
                 //},
                 {
-                    label: 'time',
+                    label: 'timeOfDay',
                     column: 0,
                     modifier: (date) => {
                         let BUCKET_SIZE = 30;
@@ -391,7 +393,7 @@ class Dashboard
                 },
                 // miles, grouped into buckets
                 {
-                    label: 'miles',
+                    label: 'distanceMiles',
                     column: 6,
                     modifier: (miles) => {
                         let BUCKET_SIZE = 250;
@@ -448,7 +450,7 @@ class Dashboard
             2,
         ]);
 
-        this.chartBubbleTimeVsDistance   = this.MakeChartBubble(this.cfg.idChartBubbleTimeVsDistance, [0, 1, 2, 3, 4]);
+        this.chartBubbleTimeVsDistance   = this.MakeChartBubbleTimeOfDay(this.cfg.idChartBubbleTimeVsDistance, [0, 1, 2, 3, 4]);
         this.chartBubbleTimeVsDistance.setDataTable(this.dataTableTimeVsDistanceView);
         
         this.chartTableOfDataBubble = this.MakeChartTableOfData(this.cfg.idTableOfDataBubble);
@@ -463,36 +465,27 @@ class Dashboard
         let that = this;
         
         let count = 0;
-        
-        function *GetNext()
-        {
-            console.log("GetNext");
-            yield* spotList;
-            //yield spotList[0];
-            //yield spotList[1];
-            //yield spotList[2];
-        }
-        
-        function AddOneMore() {
+        function AsyncAdd() {
             console.log("AddOneMore");
-            let obj = GetNext().next();
             
-            if (!obj.done)
+            let spot = spotList.pop();
+            
+            if (spot)
             {
-                console.log(obj.value);
-                that.OnNewData([obj.value]);
-                
+                that.OnNewData([spot]);
                 ++count;
-            }
-            
-            if (count < 20)
-            {
-                setTimeout(AddOneMore, 1000);
+                
+                if (count < 120)
+                {
+                    setTimeout(AsyncAdd, 0);
+                }
             }
         }
         
-        AddOneMore();
-        //this.OnNewData(spotList);
+
+        
+        //AsyncAdd();
+        this.OnNewData(spotList);
         //this.OnNewData([spotList[0]]);
         //this.OnNewData([spotList[1]]);
     }
@@ -526,6 +519,7 @@ class Dashboard
     
     UpdateDerivativeCharts()
     {
+        this.BuildDerivativeCharts();
     }
     
     DrawInternal()
@@ -598,7 +592,7 @@ class Dashboard
     }
     
 
-    MakeChartBubble(id, colList)
+    MakeChartBubbleTimeOfDay(id, colList)
     {
         // time format
         // http://userguide.icu-project.org/formatparse/datetime
@@ -612,10 +606,6 @@ class Dashboard
                         'auraColor': 'none',
                     },
                 },
-                
-                
-                
-                
                 'theme' : 'maximized',
                 'legend': {
                     'position': 'in',
