@@ -117,14 +117,10 @@ class SpotMap
     {
         this.idContainer = idContainer;
         this.map = null;
-        this.markerList = []
         
         // mid-eastern seaboard
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
         this.initialZoom           = 5;
-        
-        // Organize spots
-        this.time__locTx = {};
     }
 
     Load()
@@ -143,7 +139,8 @@ class SpotMap
             
             this.map = new google.maps.Map(document.getElementById(this.idContainer), {
                 center: this.initialCenterLocation,
-                zoom: this.initialZoom
+                zoom: this.initialZoom,
+                mapTypeId: google.maps.MapTypeId.TERRAIN,
             });
             
             readyFn()
@@ -300,12 +297,9 @@ class Dashboard
     {
         console.log("Chart libraries loaded");
         
-        
         this.BuildDataTable();
         this.BuildRealtimeCharts();
         this.BuildDerivativeCharts();
-        
-        //this.DrawInternal();
     }
     
     BuildDataTable()
