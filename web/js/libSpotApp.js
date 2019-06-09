@@ -236,7 +236,6 @@ class Dashboard
     {
         this.cfg = cfg;
         
-        this.spotList = [];
         this.dataTable = null;
         
         this.dashboard = null;
@@ -263,7 +262,7 @@ class Dashboard
 
             // Set a callback to run when the Google Visualization API is loaded.
             google.charts.setOnLoadCallback(() => {
-                this.OnChartsReady();
+                this.OnLoaded();
                 readyFn();
             });
 
@@ -272,50 +271,63 @@ class Dashboard
         return promise;
     }
     
-    AddSpotList(spotList)
+    
+    //
+    // Approach
+    // - want charts/graphs to update dynamically as new data is added to the
+    //   underlying dataTable.
+    // - unfortunately some data tables (grouped) won't update dynamically.
+    // - break operation into two phases
+    //
+    //
+    // Build
+    // - libs have loaded, can start doing google-things now.
+    // - create data table (empty)
+    // - create derived data tables which need to be re-constituted (not deleted) later
+    // - create, configure charts and associate to DOM
+    //
+    // Update
+    // - new data has arrived
+    // - push into data table
+    // - update any derrived data tables
+    //
+    //
+    
+    
+    
+    OnLoaded()
     {
-        this.spotList.push(...spotList);
+        console.log("Chart libraries loaded");
+        
+        this.BuildDataTable();
+        this.BuildRealtimeCharts();
+        this.BuildDerivativeCharts();
+        
+        this.DrawInternal();
     }
     
-    OnChartsReady()
+    BuildDataTable()
     {
-        console.log("Charts ready, building dashboard");
-        
+        // Build data table
         this.dataTable = new google.visualization.DataTable();
         
         this.dataTable.addColumn('datetime', 'time');
-        this.dataTable.addColumn('number', 'altitudeFt');
-        this.dataTable.addColumn('number', 'speedMph');
-        this.dataTable.addColumn('number', 'temperatureF');
-        this.dataTable.addColumn('number', 'milliVolts');
-        this.dataTable.addColumn('string', 'reporter');
-        this.dataTable.addColumn('number', 'miles');
-        
-        for (let spot of this.spotList)
-        {
-            this.dataTable.addRow([
-                new Date(Date.parse(spot.GetTime())),
-                spot.GetAltitudeFt(),
-                spot.GetSpeedMph(),
-                spot.GetTemperatureF(),
-                spot.GetVoltage(),
-                spot.GetReporter(),
-                spot.GetMiles(),
-            ]);
-        }
-        
-        
-        
-        
-        
-        
+        this.dataTable.addColumn('number',   'altitudeFt');
+        this.dataTable.addColumn('number',   'speedMph');
+        this.dataTable.addColumn('number',   'temperatureF');
+        this.dataTable.addColumn('number',   'milliVolts');
+        this.dataTable.addColumn('string',   'reporter');
+        this.dataTable.addColumn('number',   'miles');
+    }
+    
+    BuildRealtimeCharts()
+    {
         // Build charts
         this.chartTimeSeriesAltitude     = this.MakeChartTimeSeries(this.cfg.idChartTimeSeriesAltitudeFt,   [0, 1]);
         this.chartTimeSeriesSpeedMph     = this.MakeChartTimeSeries(this.cfg.idChartTimeSeriesSpeedMph,     [0, 2]);
         this.chartTimeSeriesTemperatureF = this.MakeChartTimeSeries(this.cfg.idChartTimeSeriesTemperatureF, [0, 3]);
         this.chartTimeSeriesMilliVolts   = this.MakeChartTimeSeries(this.cfg.idChartTimeSeriesMilliVolts,   [0, 4]);
         this.chartTimeSeriesDistance     = this.MakeChartTimeSeries(this.cfg.idChartTimeSeriesDistance,     [0, 6]);
-        
         this.chartTableOfData            = this.MakeChartTableOfData(this.cfg.idTableOfData);
         
         // Assign data table
@@ -324,13 +336,16 @@ class Dashboard
         this.chartTimeSeriesTemperatureF.setDataTable(this.dataTable);
         this.chartTimeSeriesMilliVolts.setDataTable(this.dataTable);
         this.chartTimeSeriesDistance.setDataTable(this.dataTable);
-        
         this.chartTableOfData.setDataTable(this.dataTable);
-        
-        
-        
-        
-        
+    }
+    
+    BuildDerivativeCharts()
+    {
+        this.BuildTimeVsDistanceChart();
+    }
+    
+    BuildTimeVsDistanceChart()
+    {
         // Hold onto a date object just so we can use it over and over to create
         // a time-of-day value all on the same date.
         let dateTmp = new Date();
@@ -341,7 +356,7 @@ class Dashboard
         // - col 1: distance (grouped, bucketed)
         // - col 2: count
         //
-        let dt2 = google.visualization.data.group(
+        this.dataTableTimeVsDistance = google.visualization.data.group(
             this.dataTable,
             // group-by list
             [
@@ -408,8 +423,8 @@ class Dashboard
         //   - col 2: 'number' y-axis distance
         //   - col 3: 'string' color (group, really, of which multiple IDs can be a part, call it thousand-mile)
         //   - col 4: 'number' size of dot
-        let dataView = new google.visualization.DataView(dt2);
-        dataView.setColumns([
+        this.dataTableTimeVsDistanceView = new google.visualization.DataView(this.dataTableTimeVsDistance);
+        this.dataTableTimeVsDistanceView.setColumns([
             {
                 label: 'bubbleName',
                 type: 'string',
@@ -433,18 +448,88 @@ class Dashboard
             2,
         ]);
 
-        
-
         this.chartBubbleTimeVsDistance   = this.MakeChartBubble(this.cfg.idChartBubbleTimeVsDistance, [0, 1, 2, 3, 4]);
-        this.chartBubbleTimeVsDistance.setDataTable(dataView);
-        
+        this.chartBubbleTimeVsDistance.setDataTable(this.dataTableTimeVsDistanceView);
         
         this.chartTableOfDataBubble = this.MakeChartTableOfData(this.cfg.idTableOfDataBubble);
-        this.chartTableOfDataBubble.setDataTable(dataView);
+        this.chartTableOfDataBubble.setDataTable(this.dataTableTimeVsDistanceView);
+    }
+    
+    AddSpotList(spotList)
+    {
+        console.log("AddSpotList");
+        //this.OnNewData(spotList);
         
+        let that = this;
         
+        let count = 0;
         
-        // render
+        function *GetNext()
+        {
+            console.log("GetNext");
+            yield* spotList;
+            //yield spotList[0];
+            //yield spotList[1];
+            //yield spotList[2];
+        }
+        
+        function AddOneMore() {
+            console.log("AddOneMore");
+            let obj = GetNext().next();
+            
+            if (!obj.done)
+            {
+                console.log(obj.value);
+                that.OnNewData([obj.value]);
+                
+                ++count;
+            }
+            
+            if (count < 20)
+            {
+                setTimeout(AddOneMore, 1000);
+            }
+        }
+        
+        AddOneMore();
+        //this.OnNewData(spotList);
+        //this.OnNewData([spotList[0]]);
+        //this.OnNewData([spotList[1]]);
+    }
+    
+    OnNewData(spotList)
+    {
+        console.log("OnNewData");
+        
+        this.UpdateDataTable(spotList);
+        
+        this.UpdateDerivativeCharts();
+        
+        this.DrawInternal();
+    }
+    
+    UpdateDataTable(spotList)
+    {
+        for (let spot of spotList)
+        {
+            this.dataTable.addRow([
+                new Date(Date.parse(spot.GetTime())),
+                spot.GetAltitudeFt(),
+                spot.GetSpeedMph(),
+                spot.GetTemperatureF(),
+                spot.GetVoltage(),
+                spot.GetReporter(),
+                spot.GetMiles(),
+            ]);
+        }
+    }
+    
+    UpdateDerivativeCharts()
+    {
+    }
+    
+    DrawInternal()
+    {
         this.okToDraw = true;
         this.Draw();
     }
@@ -459,9 +544,7 @@ class Dashboard
             this.chartTimeSeriesMilliVolts.draw();
             this.chartTimeSeriesDistance.draw();
             this.chartBubbleTimeVsDistance.draw();
-            
             this.chartTableOfDataBubble.draw();
-            
             this.chartTableOfData.draw();
         }
     }
@@ -632,12 +715,22 @@ class SpotApp extends libWS.WSEventHandler
     {
         console.log("Run");
         
-        this.SetInitialTimes();
+        // Set up some initial UI styling
+        let formatStr = 'YYYY-MM-DD[T]HH:mm:ss';
+
+        this.dom.timeGte.value = moment().subtract(1, "hour").format(formatStr);
+        this.dom.timeLte.value = moment().add(1, "hour").format(formatStr);
         
         
-        // wait for map to be ready, then enable interactive elements
-        console.log("Waiting for SpotMap to load");
-        this.spotMap.Load().then(() => {
+        // wait for all async modules to be ready
+        console.log("Waiting for SpotMap and Dashboard to load");
+        
+        let promiseList = [];
+        
+        promiseList.push(this.spotMap.Load());
+        promiseList.push(this.dash.Load());
+        
+        Promise.all(promiseList).then(() => {
             console.log("Spot map loaded, setting up UI handlers");
             
             this.SetUpHandlers();
@@ -662,14 +755,6 @@ class SpotApp extends libWS.WSEventHandler
         this.ws = libWS.WSManager.Connect(this, "/wspr2aprs/ws/spotquery");
     }
 
-    SetInitialTimes()
-    {
-        let formatStr = 'YYYY-MM-DD[T]HH:mm:ss';
-
-        this.dom.timeGte.value = moment().subtract(1, "hour").format(formatStr);
-        this.dom.timeLte.value = moment().add(1, "hour").format(formatStr);
-    }
-    
     
     /////////////////////////////////////////////////////////////
     //
@@ -721,10 +806,7 @@ class SpotApp extends libWS.WSEventHandler
         
         
         // Hand off to dashboard
-        
-        
         this.dash.AddSpotList(spotList);
-        this.dash.Load();
     }
 
     OnClose(ws)
