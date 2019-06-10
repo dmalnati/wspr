@@ -59,7 +59,7 @@ class WSPRDecoder:
         return name__value
         
     def GetDecodedCallsign(self, name__value):
-        retVal = name__value["CALLSIGN"]
+        retVal = None
         
         id = str(name__value["CALLSIGN"][0]) + str(name__value["CALLSIGN"][2])
         
