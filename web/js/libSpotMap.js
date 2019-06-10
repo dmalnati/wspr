@@ -144,7 +144,7 @@ class SpotMap
         
         // mid-eastern seaboard
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
-        this.initialZoom           = 7;
+        this.initialZoom           = 4;
     }
 
     Load()
@@ -165,6 +165,7 @@ class SpotMap
                 center: this.initialCenterLocation,
                 zoom: this.initialZoom,
                 mapTypeId: google.maps.MapTypeId.TERRAIN,
+                gestureHandling: 'greedy',
             });
             
             this.SetUpHandlers();
