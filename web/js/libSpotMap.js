@@ -138,9 +138,7 @@ class SpotMap
         this.markerListRx = [];
         this.txDataList = [];
         this.infoWindowList = [];
-        
-        this.showAllReceivers = true;
-        
+
         this.tracking = true;
         
         
@@ -185,41 +183,15 @@ class SpotMap
     
     SetUpHandlers()
     {
-        document.getElementById(this.cfg.idButtonShowAllRxMarkers).onclick = () => {
-            this.OnShowAllReceivers();
-        };
-        
-        document.getElementById(this.cfg.idButtonHideAllRxMarkers).onclick = () => {
-            this.OnHideAllReceivers();
-        };
-        
         this.map.addListener('click', () => {
             this.CloseAllInfoWindows();
             
             this.tracking = false;
+            
+            this.CloseAllReporterPaths();
         });
     }
-    
-    OnShowAllReceivers()
-    {
-        this.showAllReceivers = true;
         
-        for (let marker of this.markerListRx)
-        {
-            marker.setMap(this.map);
-        }
-    }
-    
-    OnHideAllReceivers()
-    {
-        this.showAllReceivers = false;
-        
-        for (let marker of this.markerListRx)
-        {
-            marker.setMap(null);
-        }
-    }
-    
     
     
     
@@ -243,6 +215,24 @@ class SpotMap
         }
     }
     
+    CloseAllReporterPaths()
+    {
+        for (let txData of this.txDataList)
+        {
+            for (let reporterLine of txData.reporterLineList)
+            {
+                reporterLine.setMap(null);
+            }
+        }
+    }
+    
+    OpenReporterPaths(txData)
+    {
+        for (let reporterLine of txData.reporterLineList)
+        {
+            reporterLine.setMap(this.map);
+        }
+    }
     
     
     
@@ -284,10 +274,7 @@ class SpotMap
             this.reporterName__data.set(reporterName, data);
             this.markerListRx.push(marker);
             
-            if (this.showAllReceivers)
-            {
-                marker.setMap(this.map);
-            }
+            marker.setMap(this.map);
         }
         
         
@@ -298,18 +285,24 @@ class SpotMap
         let txTime     = spot.GetTime();
         let found      = false;
         
-        for (let txData of this.txDataList)
+        
+        let txData;
+        for (let txDataTmp of this.txDataList)
         {
-            if (txData.txLocation.x == txLocation.x &&
-                txData.txLocation.y == txLocation.y &&
-                txData.txTime == txTime)
+            if (txDataTmp.txLocation.x == txLocation.x &&
+                txDataTmp.txLocation.y == txLocation.y &&
+                txDataTmp.txTime == txTime)
             {
                 found = true;
+                
+                txData = txDataTmp;
             }
         }
         
         if (!found)
         {
+            txData = {};
+            
             // Decide if you want a line connecting prior position to here
             // (yes if there was a prior position)
             let line = null;
@@ -341,11 +334,6 @@ class SpotMap
             this.CloseAllTransmitterMarkers();
             marker.setMap(this.map);
             
-            if (this.tracking)
-            {
-                new google.maps.event.trigger(marker, 'click');
-            }
-
             // Dot
             let dot = new google.maps.Polyline({
                 path          : [txLocation, txLocation],
@@ -357,8 +345,13 @@ class SpotMap
             });
             
             dot.addListener('click', () => {
-                console.log("poly onclick");
+                this.CloseAllInfoWindows();
+                
                 infoWindow.open(this.map, marker);
+                
+                // if you click this marker, show the paths
+                this.CloseAllReporterPaths();
+                this.OpenReporterPaths(txData);
             });
             dot.setMap(this.map);
             
@@ -366,22 +359,50 @@ class SpotMap
             
             
             // Retain state about transmitter UI
-            let txData = {
-                txTime     : txTime,
-                txLocation : txLocation,
-                marker     : marker,
-                infoWindow : infoWindow,
-                line       : line,
-                dot        : dot,
-            };
+            txData.txTime               = txTime;
+            txData.txLocation           = txLocation;
+            txData.marker               = marker;
+            txData.infoWindow           = infoWindow;
+            txData.line                 = line;
+            txData.dot                  = dot;
+            txData.reporterMarkerList   = [];
+            txData.reporterLineList     = [];
             
             this.txDataList.push(txData);
             
             if (this.tracking)
             {
+                new google.maps.event.trigger(marker, 'click');
+                
+                this.CloseAllReporterPaths();
+                
                 this.map.panTo(txLocation);
             }
         }
+        
+        // have txData now, either from finding, or creating
+        // have a spot
+        // each spot is a unique reporter
+        let reporterMarker = this.reporterName__data.get(reporterName).marker;
+        txData.reporterMarkerList.push(reporterMarker);
+        
+        let reporterLine = new google.maps.Polyline({
+            path          : [txData.txLocation, reporterMarker.position],
+            geodesic      : true,
+            strokeColor   : 'red',
+            strokeOpacity : 1.0,
+            strokeWeight  : 0.75,
+        });
+        txData.reporterLineList.push(reporterLine);
+        
+        if (this.tracking)
+        {
+            reporterLine.setMap(this.map);
+        }
+        
+        
+        
+        
     }
     
     
@@ -400,6 +421,10 @@ class SpotMap
             infoWindow.open(this.map, marker);
             
             this.tracking = true;
+            
+            // if you click this marker, show the paths
+            this.CloseAllReporterPaths();
+            this.OpenReporterPaths(this.txDataList[this.txDataList.length - 1]);
         });
         
         this.infoWindowList.push(infoWindow);
