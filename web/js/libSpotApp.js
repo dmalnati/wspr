@@ -112,7 +112,7 @@ class SpotApp extends libWS.WSEventHandler
             spotList.push(spot);
         }
         
-        if (1)
+        if (0)
         {
             // Hand off to map
             this.spotMap.AddSpotList(spotList);

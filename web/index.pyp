@@ -27,6 +27,7 @@
                 idCallsign                    : 'callsign',
                 idButtonQuery                 : 'buttonQuery',
                 idMap                         : 'map',
+                idMapStatus                   : 'mapStatus',
                 idDashboard                   : 'dashboard',
                 idChartTimeSeriesAltitudeFt   : 'chartTimeSeriesAltitudeFt',
                 idChartTimeSeriesSpeedMph     : 'chartTimeSeriesSpeedMph',
@@ -52,6 +53,7 @@
 <br/>
 
 <div id='map' style='height:400px;'></div>
+<div id='mapStatus'></div>
 
 <br/>
 <br/>

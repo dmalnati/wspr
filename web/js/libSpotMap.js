@@ -1,3 +1,4 @@
+import * as libUtl from '/core/js/libUtl.js';
 import * as libLoad from '/core/js/libLoad.js';
 
 
@@ -132,6 +133,7 @@ class SpotMap
         this.cfg = cfg;
         this.idContainer = this.cfg.idMap;
         this.map = null;
+        this.domMapStatus = null;
         
         // map element state keeping
         this.reporterName__data = new Map();
@@ -141,17 +143,21 @@ class SpotMap
 
         this.tracking = true;
         
-        
-        // mid-eastern seaboard
+        // Initial state of map
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
         this.initialZoom           = 4;
     }
 
     Load()
     {
-        console.log("Load");
+        console.log("SpotMap::Load");
         
-        let scriptSrc = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAXdaFYzQw9dxu-dG7t-LDL1jG7jhFjr8g';
+        let libraryList = ['geometry'];
+        let libraryListStr = libraryList.join(',');
+        
+        let scriptSrc  = 'https://maps.googleapis.com/maps/api/js';
+            scriptSrc += '?key=AIzaSyAXdaFYzQw9dxu-dG7t-LDL1jG7jhFjr8g';
+            scriptSrc += '&libraries=' + libraryListStr;
         
         let readyFn;
         let promise = new Promise((ready) => {
@@ -168,6 +174,7 @@ class SpotMap
                 gestureHandling: 'greedy',
             });
             
+            this.SetUpHandles();
             this.SetUpHandlers();
             
             readyFn()
@@ -176,6 +183,15 @@ class SpotMap
         return promise;
     }
     
+    
+    ///////////////////////////////////
+    // Handles to other resources
+    ///////////////////////////////////
+    
+    SetUpHandles()
+    {
+        this.domMapStatus = document.getElementById(this.cfg.idMapStatus);
+    }
     
     
     ///////////////////////////////////
@@ -249,6 +265,7 @@ class SpotMap
         for (let spot of spotList)
         {
             this.AddSpot(spot);
+            this.UpdateMapInfo();
         }
     }
     
@@ -400,10 +417,33 @@ class SpotMap
         {
             reporterLine.setMap(this.map);
         }
+    }
+    
+    UpdateMapInfo()
+    {
+        // Update map info
+        let distanceTraveledMetersTotal = 0;
         
+        for (let i = 1; i < this.txDataList.length; ++i)
+        {
+            let pointFrom = this.txDataList[i - 1].txLocation;
+            let pointTo   = this.txDataList[i].txLocation;
+            
+            let pointFromLatLng = new google.maps.LatLng(pointFrom.lat, pointFrom.lng);
+            let pointToLatLng = new google.maps.LatLng(pointTo.lat, pointTo.lng);
+            
+            let distanceTraveledMeters = google.maps.geometry.spherical.computeDistanceBetween(pointFromLatLng, pointToLatLng);
+            distanceTraveledMetersTotal += distanceTraveledMeters;
+        }
         
+        let distanceTraveledMilesTotal = Math.floor(distanceTraveledMetersTotal / 1609.344);
         
+        let mapStatus = "";
+        mapStatus += "Traveled " + libUtl.Commas(distanceTraveledMilesTotal) + " miles<br/>";
+        mapStatus += `${this.txDataList.length} transmissions<br/>`;
+        mapStatus += `${this.markerListRx.length} unique reporters`;
         
+        this.domMapStatus.innerHTML = mapStatus;
     }
     
     
