@@ -16,12 +16,31 @@
             height: 100%;
         }
         
+        body::-webkit-scrollbar { 
+            display: none;
+        }
+        
+        /******** Container of top/bottom, allowing top to stick ********/
+        
+        #allContent {
+        }
+        
         
         /******** Top Part ********/
         
         #topPartContainer {
+           position: sticky;
+           top: 0px;
+           z-index: 1;
+          
            height: 65vh;
-           position: relative;
+           
+           resize: vertical;
+           overflow: auto;
+        }
+        
+        #contentNotResizeHandle {
+            height: calc(100% - (1.2em + 2px));
         }
         
         #queryInputPartContainer {
@@ -41,15 +60,15 @@
            height: 100%;
         }
         
-        #mapStatusPartContainer {
-            position: absolute;
-            bottom: 0px;
-            left: 100px;
-            z-index: 2;
+        
+        
+        #resizeHandle {
+            height: (1.2em + 2px);
             
-            height: 1.2em;
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
             
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: lightgrey;
         }
         
 
@@ -57,14 +76,7 @@
         /******** Bottom Part ********/
         
         #bottomPartContainer {
-            height: calc(100vh - (65vh));
-            overflow: scroll;
         }
-        
-        #bottomPartContainer::-webkit-scrollbar { 
-            display: none;
-        }
-        
 
         
         .chart {
@@ -137,19 +149,28 @@
 
     <body>
 
+<div id='allContent'>
+
 <div id='topPartContainer'>
-    <div id='queryInputPartContainer'>
-        <input id='timeGte' type='datetime-local'>
-        <input id='timeLte' type='datetime-local'>
-        <input id='callsign' type='text' placeholder='callsign'>
-        <button id='buttonQuery'>Search</button>
+    <div id='contentNotResizeHandle'>
+        <div id='queryInputPartContainer'>
+            <input id='timeGte' type='datetime-local'>
+            <input id='timeLte' type='datetime-local'>
+            <input id='callsign' type='text' placeholder='callsign'>
+            <button id='buttonQuery'>Search</button>
+        </div>
+        
+        <div id='mapPartContainer'>
+            <div id='map'></div>
+        </div>
+        
     </div>
-    <div id='mapPartContainer'>
-        <div id='map'></div>
-    </div>
-    <div id='mapStatusPartContainer'>
+    
+    <div id='resizeHandle'>
         <span id='mapStatus'></span>
     </div>
+        
+    
 </div>
 
 
@@ -179,6 +200,7 @@
     </div>
 </div>
 
+</div>
 
     </body>
 </html>
