@@ -85,6 +85,9 @@ class WSSpotQuery(WSEventHandler):
                 "REPORTER": rec.Get("REPORTER"),
                 "RLAT" : rLat,
                 "RLNG" : rLng,
+                "SNR" : rec.Get("SNR"),
+                "FREQUENCY" : rec.Get("FREQUENCY"),
+                "DRIFT" : rec.Get("DRIFT"),
             })
         
         ws.Write(spotList)

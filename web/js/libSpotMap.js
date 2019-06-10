@@ -2,123 +2,6 @@ import * as libUtl from '/core/js/libUtl.js';
 import * as libLoad from '/core/js/libLoad.js';
 
 
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// TxEvent
-//
-////////////////////////////////////////////////////////////////////////////////
-
-class TxEvent
-{
-    constructor()
-    {
-        this.time     = null;
-        this.spotList = [];
-    }
-
-    SetTime(time)
-    {
-        this.time = time;
-    }
-
-    AddSpot(spot)
-    {
-        this.spotList.push(spot);
-    }
-    
-    GetTime()
-    {
-        return this.time;
-    }
-    
-    GetSpotList()
-    {
-        return this.spotList;
-    }
-}
-
-
-// returns sorted-by-time list
-class TxEventConverter
-{
-    static GetFromSpotList(spotList)
-    {
-        let time__txEvent = {};
-        
-        for (let spot of spotList)
-        {
-            let time = spot.GetTime();
-            
-            if (!(time in time__txEvent))
-            {
-                let txEvent = new TxEvent();
-                txEvent.SetTime(time);
-
-                time__txEvent[time] = txEvent;
-            }
-
-            let txEvent = time__txEvent[time];
-
-            txEvent.AddSpot(spot);
-        }
-        
-        let timeList = Object.keys(time__txEvent);
-        timeList.sort();
-        
-        let txEventList = [];
-        for (let time of timeList)
-        {
-            txEventList.push(time__txEvent[time]);
-        }
-        
-        return txEventList;
-    }
-}
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// SpotMap
-//
-////////////////////////////////////////////////////////////////////////////////
-
-
-class Reporter
-{
-    constructor(name, location)
-    {
-        this.name     = name;
-        this.location = location;
-    }
-    
-    GetName()
-    {
-        return this.name;
-    }
-    
-    GetLocation()
-    {
-        return this.location;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 // SpotMap
@@ -385,6 +268,7 @@ class SpotMap
             txData.dot                  = dot;
             txData.reporterMarkerList   = [];
             txData.reporterLineList     = [];
+            txData.spotList             = [];
             
             this.txDataList.push(txData);
             
@@ -397,6 +281,8 @@ class SpotMap
                 this.map.panTo(txLocation);
             }
         }
+        
+        txData.spotList.push(spot);
         
         // have txData now, either from finding, or creating
         // have a spot
@@ -417,26 +303,126 @@ class SpotMap
         {
             reporterLine.setMap(this.map);
         }
+        
+        this.SetInfoWindow(txData);
+    }
+    
+    SetInfoWindow(txData, spot)
+    {
+        let status = "";
+        
+        let spotFirst = txData.spotList[0];
+        
+        status += txData.txTime + "<br/>";
+        status += `${spotFirst.GetSpeedMph()} MPH, ${libUtl.Commas(spotFirst.GetAltitudeFt())} ft`;
+        status += `, ${spotFirst.GetTemperatureF()} F, ${spotFirst.GetVoltage()/1000} V<br/>`;
+        status += `${txData.spotList.length} reports<br/>`;
+        status += "<hr>";
+        
+        
+        // sorted table of reporter, distance, snr, freq, drift, 
+        let spotList = txData.spotList;
+        spotList.sort((a, b) => {
+            return this.CalcDistMilesBetween(b.GetLocationTransmitter(), b.GetLocationReporter()) -
+                   this.CalcDistMilesBetween(a.GetLocationTransmitter(), a.GetLocationReporter());
+        });
+        
+        
+        status += `<div class='spotListContainer'
+                        onwheel='CaptureOverScrollOnWheel(this, event);'
+                   >`;
+        status += "<table>";
+        status += "<style>";
+        status += `
+        
+        .spotListContainer {
+            
+            /* I want to show the header plus 5 rows */
+            /* upper/lower padding on each is equal to 1px */
+            /* em = current font size, ex = the x-height of the current font */
+            /* the fact the header is bolded seems to throw off my calc, so
+               throw in another few px for the hell of it */
+            
+            max-height: calc((4 * (2px + 1em)) + 2px);
+            
+            overflow-y: scroll;
+        }
+        
+        /* no scrollbar */
+        .spotListContainer::-webkit-scrollbar { 
+            display: none;
+        }
+        
+        table {
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        tr th:first-child, td:first-child {
+            padding-left: 0px;
+        }
+        
+        tr th:last-child, td:last-child {
+            padding-right: 0px;
+        }
+        
+        
+                  `;
+        status += "</style>";
+
+        
+        status += "<tr><th>Reporter</th><th>DistanceMI</th><th>SNR</th><th>Freq</th><th>Drift</th></tr>";
+        for (let spot of spotList)
+        {
+            let distanceMiles = Math.round(this.CalcDistMilesBetween(spot.GetLocationTransmitter(), spot.GetLocationReporter()));
+            
+            status += "<tr>"
+            
+            status += `<td>${spot.GetReporter()}</td>`;
+            status += `<td style='text-align: right;'>${libUtl.Commas(distanceMiles)}</td>`;
+            status += `<td style='text-align: right;'>${spot.GetSNR()}</td>`;
+            status += `<td style='text-align: right;'>${spot.GetFrequency()}</td>`;
+            status += `<td style='text-align: right;'>${spot.GetDrift()}</td>`;
+            
+            status += "</tr>";
+        }
+        status += "</table>";
+        status += "</div>";
+        
+        txData.infoWindow.setContent(status);
+    }
+    
+    // takes { lat: lat, lng: lng }
+    CalcDistMilesBetween(point1, point2)
+    {
+        let pointFromLatLng = new google.maps.LatLng(point1.lat, point1.lng);
+        let pointToLatLng = new google.maps.LatLng(point2.lat, point2.lng);
+        
+        let distanceMeters = google.maps.geometry.spherical.computeDistanceBetween(pointFromLatLng, pointToLatLng);
+        let distanceMiles  = distanceMeters / 1609.344;
+
+        return distanceMiles;
     }
     
     UpdateMapInfo()
     {
         // Update map info
-        let distanceTraveledMetersTotal = 0;
+        let distanceTraveledMilesTotal = 0;
         
         for (let i = 1; i < this.txDataList.length; ++i)
         {
             let pointFrom = this.txDataList[i - 1].txLocation;
             let pointTo   = this.txDataList[i].txLocation;
             
-            let pointFromLatLng = new google.maps.LatLng(pointFrom.lat, pointFrom.lng);
-            let pointToLatLng = new google.maps.LatLng(pointTo.lat, pointTo.lng);
-            
-            let distanceTraveledMeters = google.maps.geometry.spherical.computeDistanceBetween(pointFromLatLng, pointToLatLng);
-            distanceTraveledMetersTotal += distanceTraveledMeters;
+            let distanceTraveledMiles = this.CalcDistMilesBetween(pointFrom, pointTo);
+            distanceTraveledMilesTotal += distanceTraveledMiles;
         }
         
-        let distanceTraveledMilesTotal = Math.floor(distanceTraveledMetersTotal / 1609.344);
+        distanceTraveledMilesTotal = Math.round(distanceTraveledMilesTotal);
         
         let mapStatus = "";
         mapStatus += "Traveled " + libUtl.Commas(distanceTraveledMilesTotal) + " miles<br/>";
@@ -489,163 +475,6 @@ class SpotMap
         this.infoWindowList.push(infoWindow);
         
         return infoWindow;
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    ///////////////////////////////////
-    // Old Code
-    ///////////////////////////////////
-    
-    
-    
-    AddSpotListOld(spotList)
-    {
-        // Keep cache of all spots ever seen
-        this.spotList = [...this.spotList, ...spotList];
-        
-        // Update visuals
-        this.Draw();
-    }
-    
-    Draw()
-    {
-        // Convert cached spot list into tx events
-        this.txEventList = TxEventConverter.GetFromSpotList(this.spotList);
-        
-        // get list of transmitter locations
-        let pointListTransmitter = this.GetPointListTransmitter();
-        
-        // get list of reporters
-        let reporterList = this.GetReporterList();
-        
-        
-        // Reset map
-        this.ClearMap();
-        
-        // Draw reporters
-        for (let reporter of reporterList)
-        {
-            this.AddMarker(reporter.GetLocation());
-        }
-        
-        // Draw transmitter path
-        let pointLast = null;
-        for (let point of pointListTransmitter)
-        {
-            this.AddMarker(point);
-            
-            if (pointLast)
-            {
-                this.AddLine(pointLast, point, 'blue');
-            }
-            
-            pointLast = point;
-        }
-    }
-    
-    
-    ///////////////////////////////////
-    // Private
-    ///////////////////////////////////
-
-    
-    GetPointListTransmitter()
-    {
-        let pointList = [];
-        
-        for (let txEvent of this.txEventList)
-        {
-            // Each TxEvent will have 1 or more spots, all from the same
-            // time and transmitter location.
-            let spot = txEvent.GetSpotList()[0];
-            
-            let point = spot.GetLocationTransmitter();
-            
-            pointList.push(point);
-        }
-        
-        return pointList;
-    }
-    
-    // Unique list, not necessarily associated with a single event.
-    GetReporterList()
-    {
-        let reporterName__seen = {};
-        
-        let reporterList = [];
-        
-        for (let txEvent of this.txEventList)
-        {
-            for (let spot of txEvent.GetSpotList())
-            {
-                let reporterName = spot.GetReporter();
-                
-                if (!(reporterName in reporterName__seen))
-                {
-                    reporterName__seen[reporterName] = true;
-                    
-                    let reporter = new Reporter(reporterName, spot.GetLocationReporter());
-                    
-                    reporterList.push(reporter);
-                }
-            }
-        }
-        
-        return reporterList;
-    }
-    
-    ClearMap()
-    {
-        for (let marker of this.markerList)
-        {
-            marker.setMap(null);
-        }
-        
-        this.markerList = [];
-    }
-
-    AddMarker(point)
-    {
-        let marker = new google.maps.Marker({position: point});
-        
-        marker.setMap(this.map);
-        
-        this.markerList.push(marker);
-    }
-    
-    AddLine(point1, point2, color)
-    {
-        let line = new google.maps.Polyline({
-            path: [point1, point2],
-            geodesic: true,
-            strokeColor: color,
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        });
-        
-        line.setMap(this.map);
-        
-        // debug
-        this.markerList.push(line);
     }
  }
  

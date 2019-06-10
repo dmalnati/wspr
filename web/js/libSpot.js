@@ -72,6 +72,21 @@ class Spot
             lng: parseFloat(this.spotData['RLNG']),
         };
     }
+    
+    GetSNR()
+    {
+        return this.spotData['SNR'];
+    }
+    
+    GetFrequency()
+    {
+        return this.spotData['FREQUENCY'];
+    }
+    
+    GetDrift()
+    {
+        return this.spotData['DRIFT'];
+    }
 }
 
 

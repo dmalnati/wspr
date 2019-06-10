@@ -70,6 +70,40 @@ class SpotApp extends libWS.WSEventHandler
     
     SetUpHandlers()
     {
+        // Support events without relying on external implementation
+        let dynJs = `
+        //
+        // technique adapted from
+        // http://qnimate.com/detecting-end-of-scrolling-in-html-element/
+        //
+        function CaptureOverScrollOnWheel(domElement, event)
+        {
+            // check if we're scrolling down
+            if (event.deltaY > 0)
+            {
+                // check if reached bottom
+                if(domElement.offsetHeight + domElement.scrollTop == domElement.scrollHeight)
+                {
+                    event.preventDefault();
+                }
+            }
+            
+            // check if we're scrolling up
+            if (event.deltaY < 0)
+            {
+                // check if reached bottom
+                if(domElement.scrollTop == 0)
+                {
+                    event.preventDefault();
+                }
+            }
+        }
+        `;
+        
+        window.eval(dynJs);
+
+        
+        // handlers
         this.dom.buttonQuery.onclick = () => this.OnQuery();
         
         // debug
@@ -112,7 +146,7 @@ class SpotApp extends libWS.WSEventHandler
             spotList.push(spot);
         }
         
-        if (0)
+        if (1)
         {
             // Hand off to map
             this.spotMap.AddSpotList(spotList);
@@ -145,13 +179,9 @@ class SpotApp extends libWS.WSEventHandler
                 // Hand off to dashboard
                 //that.dash.AddSpotList([spot]);
                 
-                
                 ++count;
                 
-                if (count < 120)
-                {
-                    setTimeout(AsyncAdd, 200);
-                }
+                setTimeout(AsyncAdd, 200);
             }
         }
         
