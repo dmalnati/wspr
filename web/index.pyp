@@ -7,12 +7,103 @@
 
         <link rel='stylesheet' href='/core/css/core.css'>
         <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+        
+        html, body {
+            height: 100%;
+        }
+        
+        
+        /******** Top Part ********/
+        
+        #topPartContainer {
+           height: 65vh;
+           position: relative;
+        }
+        
+        #queryInputPartContainer {
+           position: absolute;
+           top: 0px;
+           z-index: 2;
+           
+           height: 1.9em;
+           width: 90vw;
+        }
+        
+        #mapPartContainer {
+           height: 100%;
+        }
+        
+        #map {
+           height: 100%;
+        }
+        
+        #mapStatusPartContainer {
+            position: absolute;
+            bottom: 0px;
+            left: 100px;
+            z-index: 2;
+            
+            height: 1.2em;
+            
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        
+
+        
+        /******** Bottom Part ********/
+        
+        #bottomPartContainer {
+            height: calc(100vh - (65vh));
+            overflow: scroll;
+        }
+        
+        #bottomPartContainer::-webkit-scrollbar { 
+            display: none;
+        }
+        
+
+        
         .chart {
             border: 1px solid black;
-            width: 50%;
-            height: 300px;
+            
+            height: 30vh;
+            width: calc(100vw - 2px);
+            
             overflow: hidden;
-         }
+            display: inline-block;
+        }
+        
+        .chartLineDouble {
+            height: 30vh;
+            width: 100%;
+            
+            /*
+             * makes it so divs can be on separate lines and the newline between
+             * them doesn't count as actual renderable content which messes up
+             * alignment
+             */
+            display: flex;
+        }
+        
+        .chartLineDouble .chart {
+            height: calc(100% - 2px);
+            width: calc(50% - 2px);
+        }
+        
+        
+        
+        .notachart {
+            text-align: center;
+            background-color: lightgrey;
+        }
+        
+        
+        
+        
         </style>
         
         <script src='/core/js/third-party/moment/moment.min.js'></script>
@@ -45,47 +136,48 @@
     </head>
 
     <body>
-<input id='timeGte' type='datetime-local'>
-<input id='timeLte' type='datetime-local'>
-<input id='callsign' type='text'>
-<button id='buttonQuery'>Search</button>
 
-<br/>
-
-<div id='map' style='height:400px;'></div>
-<div id='mapStatus'></div>
-
-<br/>
-<br/>
-<br/>
-
-
-
-<div id='dashboard'>
-    <div id='chartBubbleTimeVsDistance' class='chart'></div>
-    <div id='tableOfDataBubble'></div>
-
-    
-    <div id='chartTimeSeriesAltitudeFt' class='chart'></div>
-    <div id='chartTimeSeriesSpeedMph' class='chart'></div>
-    <div id='chartTimeSeriesTemperatureF' class='chart'></div>
-    <div id='chartTimeSeriesMilliVolts' class='chart'></div>
-    <div id='chartTimeSeriesDistance' class='chart'></div>
-    <div id='tableOfData'></div>
+<div id='topPartContainer'>
+    <div id='queryInputPartContainer'>
+        <input id='timeGte' type='datetime-local'>
+        <input id='timeLte' type='datetime-local'>
+        <input id='callsign' type='text' placeholder='callsign'>
+        <button id='buttonQuery'>Search</button>
+    </div>
+    <div id='mapPartContainer'>
+        <div id='map'></div>
+    </div>
+    <div id='mapStatusPartContainer'>
+        <span id='mapStatus'></span>
+    </div>
 </div>
 
 
+<div id='bottomPartContainer'>
+    <div id='dashboard'>
+        <div class='chartLineDouble'>
+            <div id='chartBubbleTimeVsDistance' class='chart'></div>
+            <div id='tableOfDataBubble' class='chart'></div>
+        </div>
 
-
-
-
-    <!--Div that will hold the dashboard-->
-    <div id="dashboard_div">
-      <!--Divs that will hold each control and chart-->
-      <div id="filter_div"></div>
-      <div id="chart_div"></div>
+        <div class='chartLineDouble'>
+            <div id='chartTimeSeriesAltitudeFt' class='chart'></div>
+            <div id='chartTimeSeriesSpeedMph' class='chart'></div>
+        </div>
+        
+        <div class='chartLineDouble'>
+            <div id='chartTimeSeriesTemperatureF' class='chart'></div>
+            <div id='chartTimeSeriesMilliVolts' class='chart'></div>
+        </div>
+        
+        <div class='chartLineDouble'>
+            <div id='chartTimeSeriesDistance' class='chart'></div>
+            <div class='chart notachart'><br/><br/><br/><br/><br/>no chart here</div>
+        </div>
+        
+        <div id='tableOfData' class='chart'></div>
     </div>
-
+</div>
 
 
     </body>

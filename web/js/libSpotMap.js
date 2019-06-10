@@ -55,6 +55,13 @@ class SpotMap
                 zoom: this.initialZoom,
                 mapTypeId: google.maps.MapTypeId.TERRAIN,
                 gestureHandling: 'greedy',
+                
+                zoomControl: false,
+                mapTypeControl: false,
+                scaleControl: true,
+                streetViewControl: false,
+                rotateControl: false,
+                fullscreenControl: true,
             });
             
             this.SetUpHandles();
@@ -425,8 +432,8 @@ class SpotMap
         distanceTraveledMilesTotal = Math.round(distanceTraveledMilesTotal);
         
         let mapStatus = "";
-        mapStatus += "Traveled " + libUtl.Commas(distanceTraveledMilesTotal) + " miles<br/>";
-        mapStatus += `${this.txDataList.length} transmissions<br/>`;
+        mapStatus += `Traveled ${libUtl.Commas(distanceTraveledMilesTotal)} miles, `;
+        mapStatus += `${this.txDataList.length} transmissions, `;
         mapStatus += `${this.markerListRx.length} unique reporters`;
         
         this.domMapStatus.innerHTML = mapStatus;

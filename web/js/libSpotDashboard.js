@@ -404,7 +404,8 @@ class SpotDashboard
             'chartType': 'Table',
             'containerId': id,
             'options': {
-                'height': 300,
+                'height': '100%',
+                'width' : '100%',
             },
         });
         
