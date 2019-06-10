@@ -22,14 +22,6 @@ class Spot
         return this.spotData['TIME'];
     }
 
-    GetLocationReporter()
-    {
-        return {
-            lat: parseFloat(this.spotData['RLAT']),
-            lng: parseFloat(this.spotData['RLNG']),
-        };
-    }
-
     GetLocationTransmitter()
     {
         return {
@@ -71,6 +63,14 @@ class Spot
     GetReporter()
     {
         return this.spotData['REPORTER'];
+    }
+    
+    GetLocationReporter()
+    {
+        return {
+            lat: parseFloat(this.spotData['RLAT']),
+            lng: parseFloat(this.spotData['RLNG']),
+        };
     }
 }
 

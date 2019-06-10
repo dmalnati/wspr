@@ -19,11 +19,13 @@
         
         libLoad.DocEventListenerAsPromise('DOMContentLoaded').then(() => {
             let spotApp = new libSpotApp.SpotApp({
-                idMap                         : 'map',
                 idTimeGte                     : 'timeGte',
                 idTimeLte                     : 'timeLte',
                 idCallsign                    : 'callsign',
                 idButtonQuery                 : 'buttonQuery',
+                idMap                         : 'map',
+                idButtonShowAllRxMarkers      : 'buttonShowAllRxMarkers',
+                idButtonHideAllRxMarkers      : 'buttonHideAllRxMarkers',
                 idDashboard                   : 'dashboard',
                 idChartTimeSeriesAltitudeFt   : 'chartTimeSeriesAltitudeFt',
                 idChartTimeSeriesSpeedMph     : 'chartTimeSeriesSpeedMph',
@@ -49,6 +51,8 @@
 <br/>
 
 <div id='map' style='height:400px;'></div>
+<button id='buttonShowAllRxMarkers'>Show RX</button>
+<button id='buttonHideAllRxMarkers'>Hide RX</button>
 
 <br/>
 <br/>

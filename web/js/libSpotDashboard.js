@@ -23,6 +23,10 @@ class SpotDashboard
         this.dashboard = null;
         
         this.okToDraw = false;
+        
+        window.addEventListener('resize', () => {
+            this.Draw()
+        });
     }
     
     Load()
@@ -237,41 +241,6 @@ class SpotDashboard
     
     AddSpotList(spotList)
     {
-        console.log("AddSpotList");
-        //this.OnNewData(spotList);
-        
-        let that = this;
-        
-        let count = 0;
-        function AsyncAdd() {
-            console.log("AddOneMore");
-            
-            let spot = spotList.pop();
-            
-            if (spot)
-            {
-                that.OnNewData([spot]);
-                ++count;
-                
-                if (count < 120)
-                {
-                    setTimeout(AsyncAdd, 0);
-                }
-            }
-        }
-        
-
-        
-        //AsyncAdd();
-        this.OnNewData(spotList);
-        //this.OnNewData([spotList[0]]);
-        //this.OnNewData([spotList[1]]);
-    }
-    
-    OnNewData(spotList)
-    {
-        console.log("OnNewData");
-        
         this.UpdateDataTable(spotList);
         
         this.UpdateDerivativeCharts();

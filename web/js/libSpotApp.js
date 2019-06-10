@@ -6,32 +6,6 @@ import * as libSpotDashboard from '/wspr2aprs/js/libSpotDashboard.js';
 
 
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// TxEvent
-//
-////////////////////////////////////////////////////////////////////////////////
-
-export
-class TxEvent
-{
-    constructor()
-    {
-        this.time     = null;
-        this.spotList = [];
-    }
-
-    SetTime(time)
-    {
-        this.time = time;
-    }
-
-    AddSpot(spot)
-    {
-        this.spotList.push(spot);
-    }
-}
-
 
 
 
@@ -52,14 +26,13 @@ class SpotApp extends libWS.WSEventHandler
         this.cfg = cfg;
         
         // Map App
-        this.spotMap = new libSpotMap.SpotMap(cfg.idMap);
+        this.spotMap = new libSpotMap.SpotMap(this.cfg);
         
         // Dashboard
-        this.dash = new libSpotDashboard.SpotDashboard(cfg);
+        this.dash = new libSpotDashboard.SpotDashboard(this.cfg);
         
         // Spots
         this.ws = null;
-        this.time__txEvent = {};
         
         // UI
         this.dom = {};
@@ -101,10 +74,6 @@ class SpotApp extends libWS.WSEventHandler
         
         // debug
         this.OnQuery();
-        
-        window.addEventListener('resize', () => {
-            this.dash.Draw()
-        });
     }
     
     OnQuery()
@@ -132,40 +101,75 @@ class SpotApp extends libWS.WSEventHandler
     {
         console.log("OnMessage");
         
-        let spotList = [];
-        
+        // Convert data into Spot classes
         let spotDataList = msg;
+        
+        let spotList = [];
         for (let spotData of spotDataList)
         {
-            // Organize spot data
             let spot = new libSpot.Spot(spotData);
             
             spotList.push(spot);
-
-            let time = spot.GetTime();
-            if (!(time in this.time__txEvent))
-            {
-                let txEvent = new TxEvent();
-                txEvent.SetTime(time);
-
-                this.time__txEvent[time] = txEvent;
-            }
-
-            let txEvent = this.time__txEvent[time];
-
-            txEvent.AddSpot(spot);
-            
-            
-            // Hand off a spot to the map
-            this.spotMap.AddSpot(spot);
         }
         
-        this.spotMap.DataDone();
-        
-        
-        // Hand off to dashboard
-        this.dash.AddSpotList(spotList);
+        if (0)
+        {
+            // Hand off to map
+            this.spotMap.AddSpotList(spotList);
+            
+            // Hand off to dashboard
+            this.dash.AddSpotList(spotList);
+        }
+        else
+        {
+            this.AsyncHandoff(spotList);
+        }
     }
+    
+    
+    AsyncHandoff(spotList)
+    {
+        let that = this;
+        
+        let count = 0;
+        function AsyncAdd() {
+            console.log("AsyncAdd");
+            
+            let spot = spotList.shift();
+            
+            if (spot)
+            {
+                // Hand off to map
+                that.spotMap.AddSpotList([spot]);
+                
+                // Hand off to dashboard
+                //that.dash.AddSpotList([spot]);
+                
+                
+                ++count;
+                
+                if (count < 120)
+                {
+                    setTimeout(AsyncAdd, 200);
+                }
+            }
+        }
+        
+        AsyncAdd()
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     OnClose(ws)
     {
