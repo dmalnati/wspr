@@ -39,7 +39,7 @@ class SpotApp extends libWS.WSEventHandler
         this.dom.dtGte       = document.getElementById(this.cfg.idDtGte);
         this.dom.dtLte       = document.getElementById(this.cfg.idDtLte);
         this.dom.callsign    = document.getElementById(this.cfg.idCallsign);
-        this.dom.buttonQuery = document.getElementById(this.cfg.idButtonQuery);
+        this.dom.form        = document.getElementById(this.cfg.idForm);
         this.dom.status      = document.getElementById(this.cfg.idStatus);
         this.dom.dialog      = document.getElementById(this.cfg.idDialog);
     }
@@ -102,15 +102,23 @@ class SpotApp extends libWS.WSEventHandler
 
         
         // handlers
-        this.dom.buttonQuery.onclick = () => {
+        this.dom.form.onsubmit = (event) => {
+            if (event)
+            {
+                event.preventDefault();
+            }
+            
             this.dash.Reset();
             this.spotMap.Reset();
             
             this.OnQuery();
-        }
+        };
         
         // debug
-        this.dom.buttonQuery.onclick();
+        if (0)
+        {
+            this.dom.form.onsubmit();
+        }
     }
     
     OnQuery()

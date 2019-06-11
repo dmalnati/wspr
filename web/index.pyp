@@ -181,7 +181,7 @@
                 idDtGte                       : 'dtGte',
                 idDtLte                       : 'dtLte',
                 idCallsign                    : 'callsign',
-                idButtonQuery                 : 'buttonQuery',
+                idForm                        : 'form',
                 idStatus                      : 'status',
                 idDialog                      : 'dialog',
                 idMap                         : 'map',
@@ -209,7 +209,7 @@
 <div id='topPartContainer'>
     <div id='contentNotResizeHandle'>
         <div id='queryInputPartContainer'>
-            <form>
+            <form id='form'>
 <?
 
 dtGte    = self.get_argument('dtGte', '', True)
@@ -221,7 +221,7 @@ self.write("<input id='dtLte' name='dtLte' value='%s' type='text' placeholder='Y
 self.write("<input id='callsign' name='callsign' value='%s' type='text' placeholder='callsign'>\n" % callsign)
 
 ?>
-            <button id='buttonQuery'>Search</button>
+            <button id='buttonQuery' type='submit' value=''>Search</button>
             <input id='status' type='text' placeholder='status' readonly>
             </form>
         </div>
