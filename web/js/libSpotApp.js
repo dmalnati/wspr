@@ -68,6 +68,10 @@ class SpotApp extends libWS.WSEventHandler
     
     SetUpHandlers()
     {
+        // Don't capture inputs or show old ones
+        this.dom.form.autocomplete = 'off';
+
+        
         // Support events without relying on external implementation
         let dynJs = `
         //
@@ -101,26 +105,64 @@ class SpotApp extends libWS.WSEventHandler
         window.eval(dynJs);
 
         
-        // handlers
+        // Handle form submission without navigating away the page
         this.dom.form.onsubmit = (event) => {
             if (event)
             {
                 event.preventDefault();
             }
             
-            this.dash.Reset();
-            this.spotMap.Reset();
+            // Indicate in the URL bar the parameters
+            let dtGte    = this.dom.dtGte.value.trim();
+            let dtLte    = this.dom.dtLte.value.trim();
+            let callsign = this.dom.callsign.value.trim();
             
-            this.OnQuery();
+            let newPath = `${location.pathname}?dtLte=${dtLte}&dtGte=${dtGte}&callsign=${callsign}`;
+            
+            let state = { dtGte, dtLte, callsign };
+            
+            window.history.pushState(state, newPath, newPath);
+            
+            // Kick off
+            this.ReQuery();
+            
+            return false;
         };
         
-        this.dom.form.autocomplete = 'off';
+        // If you detect forward/backward arrow, see what params were in use
+        // and re-populate and re-query.
+        window.onpopstate = (event) => {
+            if (event.state)
+            {
+                this.dom.dtGte.value    = event.state.dtGte;
+                this.dom.dtLte.value    = event.state.dtLte;
+                this.dom.callsign.value = event.state.callsign;
+                
+                this.ReQuery();
+            }
+            
+            return false;
+        };
         
-        // debug
-        if (0)
+        
+        // Check if any inputs are pre-populated.
+        // If so, auto-submit the query.
+        if (this.dom.dtGte.value.trim()    != '' ||
+            this.dom.dtLte.value.trim()    != '' ||
+            this.dom.callsign.value.trim() != '')
         {
             this.dom.form.onsubmit();
         }
+    }
+    
+    
+    ReQuery()
+    {
+        // Prepare page elements to be reconstituted
+        this.dash.Reset();
+        this.spotMap.Reset();
+        
+        this.OnQuery();
     }
     
     OnQuery()

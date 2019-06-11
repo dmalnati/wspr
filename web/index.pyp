@@ -216,9 +216,9 @@ dtGte    = self.get_argument('dtGte', '', True)
 dtLte    = self.get_argument('dtLte', '', True)
 callsign = self.get_argument('callsign', '', True)
 
-self.write("<input id='dtGte' name='dtGte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS'>\n" % dtGte)
-self.write("<input id='dtLte' name='dtLte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS'>\n" % dtLte)
-self.write("<input id='callsign' name='callsign' value='%s' type='text' placeholder='callsign'>\n" % callsign)
+self.write("<input id='dtGte' name='dtGte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS' spellcheck='false'>\n" % dtGte)
+self.write("<input id='dtLte' name='dtLte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS' spellcheck='false'>\n" % dtLte)
+self.write("<input id='callsign' name='callsign' value='%s' size='8' type='text' placeholder='callsign' spellcheck='false'>\n" % callsign)
 
 ?>
             <button id='buttonQuery' type='submit' value=''>Search</button>
