@@ -1,3 +1,4 @@
+import { Log } from '/core/js/libUtl.js';
 import * as libLoad from '/core/js/libLoad.js';
 
 
@@ -31,10 +32,7 @@ class SpotDashboard
     
     Load()
     {
-        console.log("Load");
-        
         let scriptSrc = 'https://www.gstatic.com/charts/loader.js';
-
         
         let readyFn;
         let promise = new Promise((ready) => {
@@ -42,14 +40,15 @@ class SpotDashboard
         });
         
         libLoad.LoadScriptAsPromise(scriptSrc).then(() => {
-            console.log("Charts Loader loaded");
-            
             // Load the Visualization API and the controls package.
             google.charts.load('current', {'packages':['corechart', 'controls']});
 
             // Set a callback to run when the Google Visualization API is loaded.
             google.charts.setOnLoadCallback(() => {
+                Log("Dashboard loaded");
+
                 this.OnLoaded();
+                
                 readyFn();
             });
         });
@@ -79,12 +78,22 @@ class SpotDashboard
     //
     //
     
+    Reset()
+    {
+        // blank out data table.
+        // this will automatically blank out all charts relying on this data.
+        this.dataTable.removeRows(0, this.dataTable.getNumberOfRows());
+        
+        // tell derivative charts to reconstitute themselves against no data
+        this.UpdateDerivativeCharts();
+        
+        // refresh visually
+        this.DrawInternal();
+    }
     
     
     OnLoaded()
     {
-        console.log("Chart libraries loaded");
-        
         this.BuildDataTable();
         this.BuildRealtimeCharts();
         this.BuildDerivativeCharts();

@@ -1,4 +1,4 @@
-import * as libUtl from '/core/js/libUtl.js';
+import { Log, Commas } from '/core/js/libUtl.js';
 import * as libLoad from '/core/js/libLoad.js';
 
 
@@ -15,16 +15,6 @@ class SpotMap
     {
         this.cfg = cfg;
         this.idContainer = this.cfg.idMap;
-        this.map = null;
-        this.domMapStatus = null;
-        
-        // map element state keeping
-        this.reporterName__data = new Map();
-        this.markerListRx = [];
-        this.txDataList = [];
-        this.infoWindowList = [];
-
-        this.tracking = true;
         
         // Initial state of map
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
@@ -33,8 +23,6 @@ class SpotMap
 
     Load()
     {
-        console.log("SpotMap::Load");
-        
         let libraryList = ['geometry'];
         let libraryListStr = libraryList.join(',');
         
@@ -48,29 +36,45 @@ class SpotMap
         });
         
         libLoad.LoadScriptAsPromise(scriptSrc).then(() => {
-            console.log("Google Maps loaded, creating map instance");
+            Log("SpotMap Loaded");
             
-            this.map = new google.maps.Map(document.getElementById(this.idContainer), {
-                center: this.initialCenterLocation,
-                zoom: this.initialZoom,
-                mapTypeId: google.maps.MapTypeId.TERRAIN,
-                gestureHandling: 'greedy',
-                
-                zoomControl: false,
-                mapTypeControl: false,
-                scaleControl: true,
-                streetViewControl: false,
-                rotateControl: false,
-                fullscreenControl: true,
-            });
-            
-            this.SetUpHandles();
-            this.SetUpHandlers();
+            this.Reset();
             
             readyFn()
         });
         
         return promise;
+    }
+    
+    Reset()
+    {
+        // Keep state
+        this.reporterName__data = new Map();
+        this.markerListRx = [];
+        this.txDataList = [];
+        this.infoWindowList = [];
+
+        this.tracking = true;
+
+        // Load map instance
+        this.map = new google.maps.Map(document.getElementById(this.idContainer), {
+            center: this.initialCenterLocation,
+            zoom: this.initialZoom,
+            mapTypeId: google.maps.MapTypeId.TERRAIN,
+            gestureHandling: 'greedy',
+            
+            zoomControl: false,
+            mapTypeControl: false,
+            scaleControl: true,
+            streetViewControl: false,
+            rotateControl: false,
+            fullscreenControl: true,
+        });
+        
+        // Tie in
+        this.SetUpHandles();
+        this.SetUpHandlers();
+        this.UpdateMapInfo();
     }
     
     
@@ -321,7 +325,7 @@ class SpotMap
         let spotFirst = txData.spotList[0];
         
         status += txData.txTime + "<br/>";
-        status += `${spotFirst.GetSpeedMph()} MPH, ${libUtl.Commas(spotFirst.GetAltitudeFt())} ft`;
+        status += `${spotFirst.GetSpeedMph()} MPH, ${Commas(spotFirst.GetAltitudeFt())} ft`;
         status += `, ${spotFirst.GetTemperatureF()} F, ${spotFirst.GetVoltage()/1000} V<br/>`;
         status += `${txData.spotList.length} reports<br/>`;
         status += "<hr>";
@@ -390,7 +394,7 @@ class SpotMap
             status += "<tr>"
             
             status += `<td>${spot.GetReporter()}</td>`;
-            status += `<td style='text-align: right;'>${libUtl.Commas(distanceMiles)}</td>`;
+            status += `<td style='text-align: right;'>${Commas(distanceMiles)}</td>`;
             status += `<td style='text-align: right;'>${spot.GetSNR()}</td>`;
             status += `<td style='text-align: right;'>${spot.GetFrequency()}</td>`;
             status += `<td style='text-align: right;'>${spot.GetDrift()}</td>`;
@@ -432,7 +436,7 @@ class SpotMap
         distanceTraveledMilesTotal = Math.round(distanceTraveledMilesTotal);
         
         let mapStatus = "";
-        mapStatus += `Traveled ${libUtl.Commas(distanceTraveledMilesTotal)} miles, `;
+        mapStatus += `Traveled ${Commas(distanceTraveledMilesTotal)} miles, `;
         mapStatus += `${this.txDataList.length} transmissions, `;
         mapStatus += `${this.markerListRx.length} unique reporters`;
         

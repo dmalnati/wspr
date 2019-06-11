@@ -9,31 +9,48 @@ webHandler = None
 
 
 
-
-
-
 class WSSpotQuery(WSEventHandler):
-    def __init__(self, db):
-        self.db = db
-        self.t = self.db.GetTable("WSPR_DECODED")
+    def __init__(self, db, ws, pollPeriodMs):
+        self.pollPeriodMs = pollPeriodMs
+        self.ws = ws
         self.tatz = TimeAndTimeZone()
+        self.rec = db.GetTable("WSPR_DECODED").GetRecordAccessor()
+        self.rowIdLast = -1
+        self.query = None
+        self.geo = Geolocation()
         
-    def OnWSConnectIn(self, ws):
-        # I don't think I care yet, wait for message
-        pass
-    
+        self.timer = None
+        
+        self.firstReply = True
+
+        
     def OnClose(self, ws):
-        # also don't care, should have handed off to something else by now
-        pass
+        if self.timer:
+            evm_CancelTimeout(self.timer)
+            self.timer = None
+        
+    def OnError(self, ws):
+        ws.Close()
+        
+        if self.timer:
+            evm_CancelTimeout(self.timer)
+            self.timer = None
 
+    
     def OnMessage(self, ws, msg):
-        clientTimeZone = msg["TIMEZONE"]
+        self.query = {
+            "clientTimeZone" : msg["TIMEZONE"],
+            "dtGte"          : msg["DT_GTE"],
+            "dtLte"          : msg["DT_LTE"],
+            "callsign"       : msg["CALLSIGN"],
+        }
+        
+        Log("Received spot query")
+        Log(str(self.query))
+        
+        self.DoQuery()
         
         
-        
-        
-        
-
     #    +ALTITUDE_FT     : 10000
     #     CALLSIGN        : Q42SNP
     #    +CALLSIGN_DECODED: KD2KDD
@@ -53,54 +70,106 @@ class WSSpotQuery(WSEventHandler):
     #    +TEMPERATURE_C   : 0
     #    +VOLTAGE         : 1500
     #     WATTS           : 0.050
-
-        geo = Geolocation()
-        
+    def DoQuery(self):
+        self.timer = None
+    
+        clientTimeZone = self.query['clientTimeZone']
+        dtGte          = self.query['dtGte']
+        dtLte          = self.query['dtLte']
+        qryCallsign    = self.query['callsign']
+        rec            = self.rec
+    
         spotList = []
         
+        rec.SetRowId(self.rowIdLast)
         
-        rec = self.t.GetRecordAccessor()
+        wentTooFar = False
+        
+        formatStrParse = "%Y-%m-%d %H:%M"
+        formatStrSend  = "%Y-%m-%d %H:%M:%S"
         while rec.ReadNextInLinearScan():
+            # Build list of record items to compare to query
         
-            formatStrParse = "%Y-%m-%d %H:%M"
-            formatStrSend  = "%Y-%m-%d %H:%M:%S"
-
             # convert UTC timestamps to the timezone of the client
+            # Looks like "YYYY-MM-DD HH:MM:SS" and matches query input
             self.tatz.SetTime(rec.Get("DATE"), formatStrParse, "UTC")
             timeConverted = self.tatz.GetTimeNativeInTimeZone(clientTimeZone).strftime(formatStrSend)
             
-            lat, lng = geo.ConvertGridToLatLngDecimal(rec.Get("GRID_DECODED"))
-            rLat, rLng = geo.ConvertGridToLatLngDecimal(rec.Get("RGRID"))
+            callsign = rec.Get("CALLSIGN_DECODED")
+            
+            # confirm if record matches criteria
+            queryMatch = True
+            
+            if qryCallsign != "":
+                queryMatch &= (callsign == qryCallsign)
+            else:
+                pass
+            
+            if dtGte != "":
+                queryMatch &= (dtGte <= timeConverted)
+            else:
+                pass
+            
+            if dtLte != "":
+                if timeConverted <= dtLte:
+                    queryMatch &= True
+                else:
+                    queryMatch = False
+                    wentTooFar = True
+                    
+                    break
+            else:
+                pass
+                
+            if queryMatch:
+                lat, lng   = self.geo.ConvertGridToLatLngDecimal(rec.Get("GRID_DECODED"))
+                rLat, rLng = self.geo.ConvertGridToLatLngDecimal(rec.Get("RGRID"))
+            
+                spotList.append({
+                    "TIME_ORIG"     : rec.Get("DATE"),
+                    "TIME"          : timeConverted,
+                    "LAT"           : lat,
+                    "LNG"           : lng,
+                    "MI"            : rec.Get("MI"),
+                    "ALTITUDE_FT"   : rec.Get("ALTITUDE_FT"),
+                    "SPEED_MPH"     : rec.Get("SPEED_MPH"),
+                    "TEMPERATURE_C" : rec.Get("TEMPERATURE_C"),
+                    "VOLTAGE"       : rec.Get("VOLTAGE"),
+                    "REPORTER"      : rec.Get("REPORTER"),
+                    "RLAT"          : rLat,
+                    "RLNG"          : rLng,
+                    "SNR"           : rec.Get("SNR"),
+                    "FREQUENCY"     : rec.Get("FREQUENCY"),
+                    "DRIFT"         : rec.Get("DRIFT"),
+                })
+                
+        if len(spotList) or self.firstReply:
+            self.ws.Write(spotList)
+            self.firstReply = False
         
-            spotList.append({
-                "TIME_ORIG": rec.Get("DATE"),
-                "TIME": timeConverted,
-                "LAT" : lat,
-                "LNG" : lng,
-                "MI" : rec.Get("MI"),
-                "ALTITUDE_FT" : rec.Get("ALTITUDE_FT"),
-                "SPEED_MPH" : rec.Get("SPEED_MPH"),
-                "TEMPERATURE_C" : rec.Get("TEMPERATURE_C"),
-                "VOLTAGE" : rec.Get("VOLTAGE"),
-                "REPORTER": rec.Get("REPORTER"),
-                "RLAT" : rLat,
-                "RLNG" : rLng,
-                "SNR" : rec.Get("SNR"),
-                "FREQUENCY" : rec.Get("FREQUENCY"),
-                "DRIFT" : rec.Get("DRIFT"),
-            })
+        # retain position in database for next search
+        # possible that starting position is the same as the ending position,
+        # which means no new records found.  This is expected and fine.
+        # when we wake up again, try again and maybe more will have arrived.
+        self.rowIdLast = rec.GetRowId()
         
-        ws.Write(spotList)
-    
-    
-    
-    
+        # Actually only search for more if you didn't pass the end time
+        if not wentTooFar:
+            self.timer = evm_SetTimeout(self.DoQuery, self.pollPeriodMs)
+        else:
+            pass
     
     
 
 
-
-
+class WSSpotQueryDispatcher(WSEventHandler):
+    def __init__(self, db, pollPeriodMs):
+        self.db = db
+        self.pollPeriodMs = pollPeriodMs
+        
+    def OnWSConnectIn(self, ws):
+        ws.SetHandler(WSSpotQuery(self.db, ws, self.pollPeriodMs))
+    
 
 
 
@@ -113,7 +182,9 @@ class Handler():
         self.SetUpSpotQuery()
         
     def SetUpSpotQuery(self):
-        listner = WSSpotQuery(self.webServer.db)
+        POLL_PERIOD_MS = 15000
+        
+        listner = WSSpotQueryDispatcher(self.webServer.db, POLL_PERIOD_MS)
 
         self.webServer.AddWSListener(listner, "/wspr2aprs/ws/spotquery")
         

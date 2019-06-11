@@ -116,19 +116,74 @@
         
         
         
+        /******** Dialog ********/
+        
+        /*
+         * Adapted from:
+         * https://alligator.io/html/dialog-element/
+         */
+        
+        
+        dialog {
+            z-index: -1;
+        
+            display: block;
+            position: absolute;
+            left: 0px;
+            right: 0px;
+            width: -webkit-fit-content;
+            height: -webkit-fit-content;
+            color: black;
+            margin: auto;
+            
+            text-align: center;
+            border: none;
+            padding: 2rem;
+            border-radius: 6px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1), 0 0 10px rgba(0,0,0,0.25);
+            max-width: 90vw;
+        }
+
+        dialog[open] {
+            animation: appear 1.5s;
+        }
+        
+        dialog::backdrop {
+            background: rgba(0, 0, 0, .6);
+        }
+
+        dialog .actions {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+        
+        
+        
+        
         </style>
         
-        <script src='/core/js/third-party/moment/moment.min.js'></script>
         <script type='module'>
         import * as libLoad from '/core/js/libLoad.js';
         import * as libSpotApp from '/wspr2aprs/js/libSpotApp.js';
         
         libLoad.DocEventListenerAsPromise('DOMContentLoaded').then(() => {
             let spotApp = new libSpotApp.SpotApp({
-                idTimeGte                     : 'timeGte',
-                idTimeLte                     : 'timeLte',
+                idDtGte                       : 'dtGte',
+                idDtLte                       : 'dtLte',
                 idCallsign                    : 'callsign',
                 idButtonQuery                 : 'buttonQuery',
+                idStatus                      : 'status',
+                idDialog                      : 'dialog',
                 idMap                         : 'map',
                 idMapStatus                   : 'mapStatus',
                 idDashboard                   : 'dashboard',
@@ -154,10 +209,21 @@
 <div id='topPartContainer'>
     <div id='contentNotResizeHandle'>
         <div id='queryInputPartContainer'>
-            <input id='timeGte' type='datetime-local'>
-            <input id='timeLte' type='datetime-local'>
-            <input id='callsign' type='text' placeholder='callsign'>
+            <form>
+<?
+
+dtGte    = self.get_argument('dtGte', '', True)
+dtLte    = self.get_argument('dtLte', '', True)
+callsign = self.get_argument('callsign', '', True)
+
+self.write("<input id='dtGte' name='dtGte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS'>\n" % dtGte)
+self.write("<input id='dtLte' name='dtLte' value='%s' type='text' placeholder='YYYY-MM-DD HH:MM:SS'>\n" % dtLte)
+self.write("<input id='callsign' name='callsign' value='%s' type='text' placeholder='callsign'>\n" % callsign)
+
+?>
             <button id='buttonQuery'>Search</button>
+            <input id='status' type='text' placeholder='status' readonly>
+            </form>
         </div>
         
         <div id='mapPartContainer'>
@@ -201,6 +267,15 @@
 </div>
 
 </div>
+
+
+<dialog id='dialog'>
+    Connection to server lost
+    <br/>
+    <br/>
+    <br/>
+    <button onclick='this.parentNode.close();'>OK</button>
+</dialog>
 
     </body>
 </html>
