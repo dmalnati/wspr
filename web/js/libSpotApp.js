@@ -114,6 +114,8 @@ class SpotApp extends libWS.WSEventHandler
             this.OnQuery();
         };
         
+        this.dom.form.autocomplete = 'off';
+        
         // debug
         if (0)
         {
