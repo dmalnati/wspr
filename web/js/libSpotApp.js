@@ -240,7 +240,9 @@ class SpotApp extends libWS.WSEventHandler
     
     ShowDialog()
     {
+        this.dom.dialog.style.visibility = 'visible';
         this.dom.dialog.showModal();
+        this.dom.dialog.style.display = 'hidden';
     }
     
     SetStatus(status)

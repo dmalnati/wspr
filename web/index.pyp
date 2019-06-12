@@ -125,10 +125,16 @@
         
         
         dialog {
+            /* only initially, controlled by js afterward */
+            visibility: hidden;
+            
+        
             z-index: -1;
         
             display: block;
             position: absolute;
+            top: 0px;
+            bottom: 0px;
             left: 0px;
             right: 0px;
             width: -webkit-fit-content;
