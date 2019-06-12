@@ -19,6 +19,22 @@ class SpotMap
         // Initial state of map
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
         this.initialZoom           = 4;
+        
+        // hold all map elements regardless of other access routes
+        this.mapElementList = [];
+    }
+    
+    TrackMapElement(mapElement)
+    {
+        this.mapElementList.push(mapElement);
+    }
+    
+    DiscardAllMapElements()
+    {
+        for (let mapElement of this.mapElementList)
+        {
+            mapElement.setMap(null);
+        }
     }
 
     Load()
@@ -55,21 +71,28 @@ class SpotMap
         this.infoWindowList = [];
 
         this.tracking = true;
-
-        // Load map instance
-        this.map = new google.maps.Map(document.getElementById(this.idContainer), {
-            center: this.initialCenterLocation,
-            zoom: this.initialZoom,
-            mapTypeId: google.maps.MapTypeId.TERRAIN,
-            gestureHandling: 'greedy',
-            
-            zoomControl: false,
-            mapTypeControl: false,
-            scaleControl: true,
-            streetViewControl: false,
-            rotateControl: false,
-            fullscreenControl: true,
-        });
+        
+        if (this.map)
+        {
+            this.DiscardAllMapElements();
+        }
+        else
+        {
+            // Load map instance
+            this.map = new google.maps.Map(document.getElementById(this.idContainer), {
+                center: this.initialCenterLocation,
+                zoom: this.initialZoom,
+                mapTypeId: google.maps.MapTypeId.TERRAIN,
+                gestureHandling: 'greedy',
+                
+                zoomControl: false,
+                mapTypeControl: false,
+                scaleControl: true,
+                streetViewControl: false,
+                rotateControl: false,
+                fullscreenControl: true,
+            });
+        }
         
         // Tie in
         this.SetUpHandles();
@@ -176,6 +199,7 @@ class SpotMap
                 position : rxLocation,
                 icon     : '/wspr2aprs/img/tower.png',
             });
+            this.TrackMapElement(marker);
             
             this.GiveMarkerReporterPopup(marker, reporterName);
 
@@ -230,6 +254,7 @@ class SpotMap
                     strokeOpacity : 1.0,
                     strokeWeight  : 4,
                 });
+                this.TrackMapElement(line);
                 
                 line.setMap(this.map);
             }
@@ -241,6 +266,7 @@ class SpotMap
                 position : txLocation,
                 icon     : '/wspr2aprs/img/balloon.png',
             });
+            this.TrackMapElement(marker);
             
             let infoWindow = this.GiveMarkerTransmitterPopup(marker, spot);
             this.CloseAllTransmitterMarkers();
@@ -255,6 +281,7 @@ class SpotMap
                 strokeWeight  : 6,
                 zIndex        : 10,
             });
+            this.TrackMapElement(dot);
             
             dot.addListener('click', () => {
                 this.CloseAllInfoWindows();
@@ -308,6 +335,7 @@ class SpotMap
             strokeOpacity : 1.0,
             strokeWeight  : 0.75,
         });
+        this.TrackMapElement(reporterLine);
         txData.reporterLineList.push(reporterLine);
         
         if (this.tracking)
@@ -453,6 +481,7 @@ class SpotMap
         let infoWindow = new google.maps.InfoWindow({
             content: contentString
         });
+        this.TrackMapElement(infoWindow);
         
         marker.addListener('click', () => {
             this.CloseAllInfoWindows();
@@ -477,6 +506,7 @@ class SpotMap
         let infoWindow = new google.maps.InfoWindow({
             content: contentString
         });
+        this.TrackMapElement(infoWindow);
         
         marker.addListener('click', () => {
             this.CloseAllInfoWindows();
