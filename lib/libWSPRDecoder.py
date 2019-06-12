@@ -61,13 +61,14 @@ class WSPRDecoder:
     def GetDecodedCallsign(self, name__value):
         retVal = None
         
-        id = str(name__value["CALLSIGN"][0]) + str(name__value["CALLSIGN"][2])
-        
-        #if id == "00":
-        #    retVal = "KD2KDD"
+        if len(name__value["CALLSIGN"]) >= 3:
+            id = str(name__value["CALLSIGN"][0]) + str(name__value["CALLSIGN"][2])
             
-        if id == "Q2":
-            retVal = "KD2KDD"
+            #if id == "00":
+            #    retVal = "KD2KDD"
+                
+            if id == "Q2":
+                retVal = "KD2KDD"
             
         return retVal
     

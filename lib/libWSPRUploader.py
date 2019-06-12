@@ -303,7 +303,12 @@ class WSPRUploader:
                 match = re.search(r"([0123456789]*) out of ", byteList.decode())
                 uploadCount = 0
                 if match:
-                    uploadCount = match.groups()[0]
+                    matchStr = match.groups()[0]
+                    try:
+                        uploadCount = int(matchStr)
+                    except Exception as e:
+                        Log("Could not parse WSPR upload count: %s" % e)
+                        log(matchStr)
                 
                 retVal = uploadCount
                 
