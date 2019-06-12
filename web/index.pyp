@@ -173,7 +173,9 @@
             }
         }
         
-        
+        .chart span {
+            display: none;
+        }
         
         
         </style>

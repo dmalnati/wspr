@@ -97,6 +97,8 @@ class SpotDashboard
         this.BuildDataTable();
         this.BuildRealtimeCharts();
         this.BuildDerivativeCharts();
+        
+        this.DrawInternal();
     }
     
     BuildDataTable()
