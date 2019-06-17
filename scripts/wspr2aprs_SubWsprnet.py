@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python3.5 -u
 
 import os
 import subprocess
