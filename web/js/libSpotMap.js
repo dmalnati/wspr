@@ -197,7 +197,7 @@ class SpotMap
             
             let marker = new google.maps.Marker({
                 position : rxLocation,
-                icon     : '/wspr2aprs/img/tower.png',
+                icon     : '/wspr/img/tower.png',
             });
             this.TrackMapElement(marker);
             
@@ -264,7 +264,7 @@ class SpotMap
             // Marker
             let marker = new google.maps.Marker({
                 position : txLocation,
-                icon     : '/wspr2aprs/img/balloon.png',
+                icon     : '/wspr/img/balloon.png',
             });
             this.TrackMapElement(marker);
             

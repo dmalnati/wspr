@@ -1,0 +1,29 @@
+{ "processDetailsList" : [
+
+
+{
+    "name" : "WSPR_SUB_WSPRNET",
+    "desc" : "Sub %WSPR_SUB_HOURS_TO_KEEP% hr, %WSPR_SUB_INTERVAL_SEC% sec, %WSPR_SUB_BATCH_SIZE% batch",
+    "cmd"  : "wspr_SubWsprnet.py %WSPR_SUB_HOURS_TO_KEEP% %WSPR_SUB_INTERVAL_SEC% %WSPR_SUB_BATCH_SIZE%"
+}
+,
+{
+    "name" : "WSPR_FILT_DECODE",
+    "desc" : "Filter/Decode %WSPR_FD_INTERVAL_SEC% %WSPR_FD_START_MODE% %WSPR_FD_DEBUG%",
+    "cmd"  : "wspr_FiltAndDecode.py %WSPR_FD_INTERVAL_SEC% %WSPR_FD_START_MODE% %WSPR_FD_DEBUG%"
+}
+,
+{
+    "name" : "WSPR_PUB_APRS",
+    "desc" : "Pub to APRS %WSPR_PUB_APRS_INTERVAL_SEC% %WSPR_PUB_APRS_START_MODE% %WSPR_PUB_APRS_DEBUG%",
+    "cmd"  : "wspr_PubWsprToAprs.py %WSPR_PUB_APRS_USER% %WSPR_PUB_APRS_PASS% %WSPR_PUB_APRS_INTERVAL_SEC% %WSPR_PUB_APRS_START_MODE% %WSPR_PUB_APRS_DEBUG%"
+}
+,
+{
+    "name" : "WSPR_PUB_WSPR",
+    "desc" : "Pub to WSPR %WSPR_PUB_WSPR_INTERVAL_SEC% %WSPR_PUB_WSPR_START_MODE% %WSPR_PUB_WSPR_DEBUG%",
+    "cmd"  : "wspr_PubWsprToWspr.py %WSPR_PUB_WSPR_INTERVAL_SEC% %WSPR_PUB_WSPR_START_MODE% %WSPR_PUB_WSPR_DEBUG%"
+}
+
+
+] }

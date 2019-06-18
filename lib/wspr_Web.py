@@ -186,7 +186,7 @@ class Handler():
         
         listner = WSSpotQueryDispatcher(self.webServer.db, POLL_PERIOD_MS)
 
-        self.webServer.AddWSListener(listner, "/wspr2aprs/ws/spotquery")
+        self.webServer.AddWSListener(listner, "/wspr/ws/spotquery")
         
     
     

@@ -1,8 +1,8 @@
 import { Log } from '/core/js/libUtl.js';
 import * as libWS from '/core/js/libWS.js';
-import * as libSpot from '/wspr2aprs/js/libSpot.js';
-import * as libSpotMap from '/wspr2aprs/js/libSpotMap.js';
-import * as libSpotDashboard from '/wspr2aprs/js/libSpotDashboard.js';
+import * as libSpot from '/wspr/js/libSpot.js';
+import * as libSpotMap from '/wspr/js/libSpotMap.js';
+import * as libSpotDashboard from '/wspr/js/libSpotDashboard.js';
 
 
 
@@ -179,7 +179,7 @@ class SpotApp extends libWS.WSEventHandler
         
         this.SetStatus("Connecting");
         
-        this.ws = libWS.WSManager.Connect(this, "/wspr2aprs/ws/spotquery");
+        this.ws = libWS.WSManager.Connect(this, "/wspr/ws/spotquery");
     }
     
     

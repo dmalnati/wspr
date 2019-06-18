@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>WSPR2APRS</title>
+        <title>WSPRS</title>
         
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 
@@ -182,7 +182,7 @@
         
         <script type='module'>
         import * as libLoad from '/core/js/libLoad.js';
-        import * as libSpotApp from '/wspr2aprs/js/libSpotApp.js';
+        import * as libSpotApp from '/wspr/js/libSpotApp.js';
         
         libLoad.DocEventListenerAsPromise('DOMContentLoaded').then(() => {
             let spotApp = new libSpotApp.SpotApp({

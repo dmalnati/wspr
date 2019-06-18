@@ -1,0 +1,31 @@
+{
+
+    "#":"Subscriber-specific parameters",
+
+    "WSPR_SUB_HOURS_TO_KEEP" : "120",
+    "WSPR_SUB_INTERVAL_SEC"  : "30",
+    "WSPR_SUB_BATCH_SIZE"    : "2000",
+
+    
+    "#":"Filter/Decoder-specific parameters",
+
+    "WSPR_FD_INTERVAL_SEC" : "30",
+    "WSPR_FD_START_MODE"   : "warm",
+    "WSPR_FD_DEBUG"        : "",
+
+    
+    "#":"APRS Publisher-specific parameters",
+
+    "WSPR_PUB_APRS_USER"         : "fakeUsr",
+    "WSPR_PUB_APRS_PASS"         : "fakePass",
+    "WSPR_PUB_APRS_INTERVAL_SEC" : "30",
+    "WSPR_PUB_APRS_START_MODE"   : "warm",
+    "WSPR_PUB_APRS_DEBUG"        : "debug",
+
+    "#":"WSPR Publisher-specific parameters",
+
+    "WSPR_PUB_WSPR_INTERVAL_SEC" : "30",
+    "WSPR_PUB_WSPR_START_MODE"   : "warm",
+    "WSPR_PUB_WSPR_DEBUG"        : "debug"
+
+}
