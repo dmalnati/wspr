@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>WSPRS</title>
+        <title>WSPR</title>
         
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 
