@@ -137,7 +137,10 @@ class SpotMap
     {
         for (let infoWindow of this.infoWindowList)
         {
-            infoWindow.close();
+            if (infoWindow.map != null)
+            {
+                infoWindow.close();
+            }
         }
     }
     
@@ -155,7 +158,10 @@ class SpotMap
         {
             for (let reporterLine of txData.reporterLineList)
             {
-                reporterLine.setMap(null);
+                if (reporterLine.getMap() != null)
+                {
+                    reporterLine.setMap(null);
+                }
             }
         }
     }
@@ -182,8 +188,8 @@ class SpotMap
         for (let spot of spotList)
         {
             this.AddSpot(spot);
-            this.UpdateMapInfo();
         }
+        this.UpdateMapInfo();
     }
     
     AddSpot(spot)
