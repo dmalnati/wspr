@@ -10,7 +10,7 @@ from libCore import *
 db = Database()
 
 def DoScan():
-    t   = db.GetTable("DOWNLOAD")
+    t   = db.GetTable("WSPR_ALL_BALLOON_TELEMETRY")
     rec = t.GetRecordAccessor()
 
     # Search for all callsigns
@@ -45,8 +45,7 @@ def DoScan():
     secDiff = DateTimeStrDiffSec(timeEnd, timeStart)
     
     # Display
-    idList = id__count.keys()
-    idList.sort()
+    idList = sorted(id__count.keys())
 
     print("%s sec scan" % secDiff)
     print("%s / %s in scan" % (Commas(countInScan), Commas(countSeen)))

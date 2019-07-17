@@ -18,7 +18,7 @@ class WSPRDecoder:
         retVal = False
         
         call = self.GetDecodedCallsign(name__value)
-        if call == "KD2KDD":
+        if call == "KD2KDD" or call == "KN4IUD":
             retVal = True
             
         return retVal
@@ -69,6 +69,8 @@ class WSPRDecoder:
                 
             if id == "Q2":
                 retVal = "KD2KDD"
+            if id == "Q4":
+                retVal = "KN4IUD"
             
         return retVal
     
