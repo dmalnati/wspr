@@ -104,7 +104,7 @@ class App(WSApp):
         callsign = name__value["CALLSIGN"]
 
         # check if balloon telemetry and store if yes
-        if callsign[0] == "Q" or callsign[0] == "0":
+        if callsign[0] == "Q" or callsign[0] == "1" or callsign[0] == "0":
             recAll = self.tAll.GetRecordAccessor()
             recAll.CopyIntersection(rec)
             if not self.debug:

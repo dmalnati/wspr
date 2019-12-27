@@ -30,7 +30,7 @@ def DoScan():
         c1 = callsign[0]
         c3 = callsign[2]
 
-        if (c1 == "0" or c1 == "Q") and c3.isnumeric():
+        if (c1 == "0" or c1 == "1" or c1 == "Q") and c3.isnumeric():
             countInScan += count
             
             id = c1 + c3
