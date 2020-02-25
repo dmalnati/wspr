@@ -12,6 +12,19 @@ import sys
 #
 
 
+def IntAsPadStr(val):
+    retVal = str(val)
+
+    if len(retVal) == 1:
+        retVal = "0" + retVal
+
+    return retVal
+
+
+def MakeTimeStr(hourInt, minuteInt):
+    return IntAsPadStr(hourInt) + IntAsPadStr(minuteInt)
+
+
 # data expected to look like this:
 #
 # 1558   -2   1.5    0.197966   -4   Q04XAW        EL87      0   7526
@@ -33,30 +46,68 @@ def Process(wsjtDecodesFile):
     if fileData is not None:
         lineList = fileData.split('\n')
 
-        timeIdSet = dict()
-        id__count = dict()
+        timeIdSet      = dict()
+        id_time__count = dict()
+        
         for line in lineList:
             linePartList = line.split()
 
             if len(linePartList) == 9:
-                time = linePartList[0]
-                id   = linePartList[5][0] + linePartList[5][2]
+                time        = linePartList[0]
+                timeHour    = time[:2]
+                timeMin     = time[2:]
+                timeMinInt  = int(timeMin)
+                id          = linePartList[5][0] + linePartList[5][2]
+
+                # snap time to 30 min interval
+                timeMinUse = "00"
+                if timeMinInt >= 30:
+                    timeMinUse = "30"
+                timeUse = MakeTimeStr(timeHour, timeMinUse)
 
                 timeId = (time, id)
 
                 if timeId not in timeIdSet:
                     timeIdSet[timeId] = ""
 
-                    if id not in id__count:
-                        id__count[id] = 0
-                    
-                    id__count[id] += 1
+                    if id not in id_time__count:
+                        id_time__count[id] = dict()
 
-        idList = sorted(id__count.keys())
+                    if timeUse not in id_time__count[id]:
+                        id_time__count[id][timeUse] = 0
 
+                    id_time__count[id][timeUse] += 1
+
+        idList = sorted(id_time__count.keys())
+
+
+        # time vertical, ids horizontal, intersection count
+        print("time,", end='')
+
+        sep = ""
         for id in idList:
-            count = id__count[id]
-            print("{} : {}".format(id, count))
+            print("{}  {}".format(sep, id), end='')
+            sep = ","
+        print()
+
+        for hour in range(23):
+            for minute in [0, 30]:
+                time = MakeTimeStr(hour, minute)
+
+                print("{},".format(time), end='')
+                
+                sep = ""
+                for id in idList:
+                    count = 0
+
+                    count = "0"
+                    if time in id_time__count[id]:
+                        count = id_time__count[id][time]
+
+                    print("{} %3s".format(sep) % (count), end='')
+                    sep = ","
+
+                print()
 
     return retVal
 
@@ -76,10 +127,6 @@ def Main():
     return retVal == False
 
 sys.exit(Main())
-
-
-
-
 
 
 
