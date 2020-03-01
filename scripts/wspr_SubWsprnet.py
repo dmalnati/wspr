@@ -51,11 +51,20 @@ class App(WSApp):
             self.OnDatabaseClosing()
 
 
-    def GetDataAtUrl(self, url, timeoutSecs = 60):
+    def GetDataAtUrl(self, url, timeoutSecs = 60, retries = 1):
         byteList = bytearray()
         
         try:
-            byteList = subprocess.check_output(['wget', '-T', str(timeoutSecs), '-qO-', url])
+            # -t retries
+            # -T timeout on all of:
+            #   DNS
+            #   Connection (waiting to connect via TCP)
+            #   Idle during download (duration between bytes)
+            #
+            # Unfortunately can't find a way to have it give up if the total
+            # duration of the download exceeds a limit.  A wrapper may be
+            # necessary if becomes problematic.
+            byteList = subprocess.check_output(['wget', '-t', str(retries), '-T', str(timeoutSecs), '-qO-', url])
         except Exception as e:
             Log("Could not download url (%s): %s" % (url, e))
         
