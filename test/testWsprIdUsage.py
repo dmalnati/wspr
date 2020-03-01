@@ -2,6 +2,7 @@
 
 import os
 import sys
+from collections import defaultdict 
 
 from libCore import *
 
@@ -9,19 +10,36 @@ from libCore import *
 
 db = Database()
 
-def DoScan():
+def DoScan(dayLookback = 14):
     t   = db.GetTable("WSPR_ALL_BALLOON_TELEMETRY")
     rec = t.GetRecordAccessor()
 
-    # Search for all callsigns
+    # Measure duration of scan
     timeStart = DateTimeNow()
     
-    callsign__count = t.Distinct("CALLSIGN")
+    # Search for all callsigns
+    callsign__count = defaultdict(int)
+
+    # Examine records within a lookback period
+    tatz = TimeAndTimeZone()
+    now = tatz.Now()
+    timeThreshold = now - datetime.timedelta(days=dayLookback)
+
+    rec.Reset()
+    while rec.ReadPrevInLinearScan():
+        recTime = tatz.ParseAndGetTimeNativeInTimeZone(rec.Get("DATE"), "%Y-%m-%d %H:%M", "UTC")
+
+        if recTime >= timeThreshold:
+            callsign = rec.Get("CALLSIGN")
+
+            callsign__count[callsign] += 1
+        else:
+            break
     
     # Determine which are telemetry callsigns
     countSeen   = 0
     countInScan = 0
-    id__count = dict()
+    id__count = defaultdict(int)
     for callsign in callsign__count.keys():
         count = callsign__count[callsign]
         
@@ -35,9 +53,6 @@ def DoScan():
             
             id = c1 + c3
             
-            if id not in id__count:
-                id__count[id] = 0
-            
             id__count[id] += count
 
             
@@ -47,16 +62,34 @@ def DoScan():
     # Display
     idList = sorted(id__count.keys())
 
+    print("Records : %9s" % (Commas(t.Count())))
+    print("Examined: %9s" % (Commas(countSeen)))
+    print("Ballon  : %9s" % (Commas(countInScan)))
     print("%s sec scan" % secDiff)
-    print("%s / %s in scan" % (Commas(countInScan), Commas(countSeen)))
-    for id in idList:
-        print("%s - %5s" % (id, Commas(id__count[id])))
+    print()
+
+    for id0 in ['0', '1', 'Q']:
+        for id1 in range(10):
+            id = id0 + str(id1)
+            
+            print("%s - %5s" % (id, Commas(id__count[id])))
 
 
 def Main():
+    dayLookback = 14
+
+    if (len(sys.argv) >= 2 and sys.argv[1] == "--help"):
+        print("Usage: %s <dayLookback=%s>" % (sys.argv[0], dayLookback))
+        sys.exit(-1)
+
+    if len(sys.argv) == 2:
+        dayLookback = int(sys.argv[1])
+
+    print("Day Lookback: {}".format(dayLookback))
+    
     # Access database
     if db.Connect():
-        DoScan()
+        DoScan(dayLookback)
     else:
         print("Could not connected to Database")
     
