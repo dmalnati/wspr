@@ -38,17 +38,21 @@ class WSSpotQuery(WSEventHandler):
 
     
     def OnMessage(self, ws, msg):
-        self.query = {
-            "clientTimeZone" : msg["TIMEZONE"],
-            "dtGte"          : msg["DT_GTE"],
-            "dtLte"          : msg["DT_LTE"],
-            "callsign"       : msg["CALLSIGN"],
-        }
-        
-        Log("Received spot query")
-        Log(str(self.query))
-        
-        self.DoQuery()
+        if "MESSAGE_TYPE" in msg:
+            if msg["MESSAGE_TYPE"] == "SPOT_QUERY":
+                self.query = {
+                    "clientTimeZone" : msg["TIMEZONE"],
+                    "dtGte"          : msg["DT_GTE"],
+                    "dtLte"          : msg["DT_LTE"],
+                    "callsign"       : msg["CALLSIGN"],
+                }
+                
+                Log("Received spot query")
+                Log(str(self.query))
+                
+                self.DoQuery()
+            elif msg["MESSAGE_TYPE"] == "HEARTBEAT":
+                ws.Write({"MESSAGE_TYPE" : "HEARTBEAT"})
         
         
     #    +ALTITUDE_FT     : 10000

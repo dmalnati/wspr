@@ -33,6 +33,7 @@ class SpotApp extends libWS.WSEventHandler
         
         // Spots
         this.ws = null;
+        this.heartbeatTimerHandle = null;
         
         // UI
         this.dom = {};
@@ -269,6 +270,7 @@ class SpotApp extends libWS.WSEventHandler
         // Convert from "2019-06-10T22:34:24" to "2019-06-10 22:34:24"
         // (remove the T, replace with space)
         let msg = {
+            "MESSAGE_TYPE" : "SPOT_QUERY",
             "TIMEZONE" : Intl.DateTimeFormat().resolvedOptions().timeZone,
             "DT_GTE"   : this.dom.dtGte.value.trim(),
             "DT_LTE"   : this.dom.dtLte.value.trim(),
@@ -278,11 +280,34 @@ class SpotApp extends libWS.WSEventHandler
         Log(JSON.stringify(msg));
         
         ws.Write(msg);
+
+        this.OnHeartbeat();
+    }
+
+    ScheduleNextHeartbeat()
+    {
+        this.heartbeatTimerHandle = setTimeout(() => {
+            this.OnHeartbeat();
+        }, 30000);
+    }
+
+    OnHeartbeat()
+    {
+        if (this.ws)
+        {
+            this.ws.Write({"MESSAGE_TYPE" : "HEARTBEAT"});
+        }
+
+        this.ScheduleNextHeartbeat();
     }
     
     OnMessage(ws, msg)
     {
-        this.OnDataArrived(msg);
+        // Filter out heartbeat messages, otherwise expecting a list of spot objects
+        if (!("MESSAGE_TYPE" in msg))
+        {
+            this.OnDataArrived(msg);
+        }
     }
     
     OnClose(ws)
