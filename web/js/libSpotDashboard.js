@@ -26,6 +26,10 @@ class SpotDashboard
         this.okToDraw = false;
         
         window.addEventListener('resize', () => {
+            Log("RESIZE");
+
+            // should set a timer to come back and look at this, seemingly the event fires twice
+
             this.Draw()
         });
     }
@@ -256,6 +260,7 @@ class SpotDashboard
         
         this.UpdateDerivativeCharts();
         
+        // return;
         this.DrawInternal();
     }
     
@@ -290,14 +295,16 @@ class SpotDashboard
     {
         if (this.okToDraw)
         {
+            Log("Draw Start");
             this.chartTimeSeriesAltitude.draw();
             this.chartTimeSeriesSpeedMph.draw();
-            this.chartTimeSeriesTemperatureF.draw();
-            this.chartTimeSeriesMilliVolts.draw();
-            this.chartTimeSeriesDistance.draw();
+            //this.chartTimeSeriesTemperatureF.draw();
+            //this.chartTimeSeriesMilliVolts.draw();
+            //this.chartTimeSeriesDistance.draw();
             this.chartBubbleTimeVsDistance.draw();
-            this.chartTableOfDataBubble.draw();
+            //this.chartTableOfDataBubble.draw();
             this.chartTableOfData.draw();
+            Log("Draw End");
         }
     }
     
