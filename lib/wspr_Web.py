@@ -101,9 +101,29 @@ class WSSpotQuery(WSEventHandler):
         rec            = self.rec
     
         spotList = []
+
+        # Since working with time series, try to jump past all old records and
+        # straight to beginning of period with relevant records
+        if self.rowIdLast == -1:
+            formatStrParseClient  = "%Y-%m-%d %H:%M:%S"
+            formatStrForDatabase  = "%Y-%m-%d %H:%M:%S"
+
+            # convert client timestamp to server timestamp (not UTC, nor guaranteed to be client timezone)
+            dtGte = self.tatz.GetValidTimeString(dtGte)
+            self.tatz.SetTime(dtGte, formatStrParseClient, clientTimeZone)
+            timeConverted = self.tatz.GetTimeNativeInTimeZone(self.tatz.GetTimeZoneLocal()).strftime(formatStrForDatabase)
+            
+            rec.Reset()
+            rec.Set("TIMESTAMP", timeConverted)
+            retVal = rec.ReadGTEInTimeSeries()
+
+            if retVal:
+                rec.SetRowId(rec.GetRowId() - 1)
+        else:
+            rec.SetRowId(self.rowIdLast)
         
-        rec.SetRowId(self.rowIdLast)
-        
+
+        # Now iterate over records within period of relevance
         wentTooFar = False
         
         formatStrParse = "%Y-%m-%d %H:%M"
