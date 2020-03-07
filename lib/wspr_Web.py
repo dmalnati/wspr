@@ -10,7 +10,8 @@ webHandler = None
 
 
 class WSSpotQuery(WSEventHandler):
-    def __init__(self, db, ws, pollPeriodMs):
+    def __init__(self, handler, db, ws, pollPeriodMs):
+        self.handler = handler
         self.pollPeriodMs = pollPeriodMs
         self.ws = ws
         self.tatz = TimeAndTimeZone()
@@ -23,11 +24,14 @@ class WSSpotQuery(WSEventHandler):
         
         self.firstReply = True
 
+        handler.OnQueryStart(self)
         
     def OnClose(self, ws):
         if self.timer:
             evm_CancelTimeout(self.timer)
             self.timer = None
+        
+        self.handler.OnQueryEnd(self)
         
     def OnError(self, ws):
         ws.Close()
@@ -35,8 +39,19 @@ class WSSpotQuery(WSEventHandler):
         if self.timer:
             evm_CancelTimeout(self.timer)
             self.timer = None
+        
+        self.handler.OnQueryEnd(self)
 
-    
+    def OnClientReqDeleteSpot(self, msg):
+        rowId = msg["ROW_ID"]
+        self.handler.OnClientReqDeleteSpot(rowId)
+
+    def OnTellClientDeleteSpot(self, rowId):
+        self.ws.Write({
+            "MESSAGE_TYPE" : "DELETE_SPOT",
+            "ROW_ID"       : rowId
+        })
+
     def OnMessage(self, ws, msg):
         if "MESSAGE_TYPE" in msg:
             if msg["MESSAGE_TYPE"] == "SPOT_QUERY":
@@ -53,6 +68,8 @@ class WSSpotQuery(WSEventHandler):
                 self.DoQuery()
             elif msg["MESSAGE_TYPE"] == "HEARTBEAT":
                 ws.Write({"MESSAGE_TYPE" : "HEARTBEAT"})
+            elif msg["MESSAGE_TYPE"] == "DELETE_SPOT":
+                self.OnClientReqDeleteSpot(msg)
         
         
     #    +ALTITUDE_FT     : 10000
@@ -130,6 +147,7 @@ class WSSpotQuery(WSEventHandler):
                 rLat, rLng = self.geo.ConvertGridToLatLngDecimal(rec.Get("RGRID"))
             
                 spotList.append({
+                    "ROWID"         : rec.GetRowId(),
                     "TIME_ORIG"     : rec.Get("DATE"),
                     "TIME"          : timeConverted,
                     "LAT"           : lat,
@@ -167,12 +185,13 @@ class WSSpotQuery(WSEventHandler):
 
 
 class WSSpotQueryDispatcher(WSEventHandler):
-    def __init__(self, db, pollPeriodMs):
+    def __init__(self, handler, db, pollPeriodMs):
+        self.handler = handler
         self.db = db
         self.pollPeriodMs = pollPeriodMs
         
     def OnWSConnectIn(self, ws):
-        ws.SetHandler(WSSpotQuery(self.db, ws, self.pollPeriodMs))
+        ws.SetHandler(WSSpotQuery(self.handler, self.db, ws, self.pollPeriodMs))
     
 
 
@@ -181,19 +200,83 @@ class WSSpotQueryDispatcher(WSEventHandler):
 class Handler():
     def __init__(self, webServer):
         self.webServer = webServer
+
+        self.query__data = dict()
         
     def Init(self):
         self.SetUpSpotQuery()
         
+        # establish connection to service for deleting spots
+        self.webServer.Connect(self, "WSPR_FILT_DECODE")
+        
     def SetUpSpotQuery(self):
         POLL_PERIOD_MS = 15000
         
-        listner = WSSpotQueryDispatcher(self.webServer.db, POLL_PERIOD_MS)
+        listner = WSSpotQueryDispatcher(self, self.webServer.db, POLL_PERIOD_MS)
 
         self.webServer.AddWSListener(listner, "/wspr/ws/spotquery")
-        
+
+
+    # keep track of ongoing queries
+    def OnQueryStart(self, query):
+        Log("Query started")
+        self.query__data[query] = None
+
+    def OnQueryEnd(self, query):
+        Log("Query ended")
+        del self.query__data[query]
+
+    def GetQueryList(self):
+        return list(self.query__data.keys())
+
+
+    # Handle event processing of deleting a spot
+    def OnClientReqDeleteSpot(self, rowId):
+        Log("Client asked to delete %s" % (rowId))
+
+        self.SendToFilt({
+            "MESSAGE_TYPE" : "DELETE_SPOT",
+            "ROW_ID"       : rowId
+        })
     
+    def OnTellClientDeleteSpot(self, msg):
+        rowId = msg["ROW_ID"]
+
+        Log("Telling %s clients to delete %s" % (len(self.GetQueryList()), rowId))
+
+        for query in self.GetQueryList():
+            query.OnTellClientDeleteSpot(rowId)
+
+
+    # Handle communication to/from decoder
+    def SendToFilt(self, msg):
+        if self.ws:
+            self.ws.Write(msg)
+        else:
+            Log("Tried to write to WSPR_FILT_DECODE but connection down")
+            Log(msg)
     
+    def OnConnect(self, ws):
+        Log("OnConnect to WSPR_FILT_DECODE")
+        self.ws = ws
+
+    def OnMessage(self, ws, msg):
+        Log("OnMessage from WSPR_FILT_DECODE: %s" % msg)
+
+        if msg["MESSAGE_TYPE"] == "DELETE_SPOT_ACK":
+            self.OnTellClientDeleteSpot(msg)
+        else:
+            Log("Unrecognized message from WSPR_FILT_DECODE")
+            Log(msg)
+
+    def OnClose(self, ws):
+        Log("OnClose from WSPR_FILT_DECODE, attempting re-connect")
+        self.ws = None
+        self.webServer.Connect(self, "WSPR_FILT_DECODE")
+
+    def OnError(self, ws):
+        Log("Trying again to reconnect to WSPR_FILT_DECODE")
+
     
     
     

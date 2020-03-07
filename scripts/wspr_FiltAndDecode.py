@@ -10,7 +10,7 @@ from libCore import *
 from libWSPRDecoder import *
 
 
-class App(WSApp):
+class App(WSApp, WSEventHandler):
     def __init__(self, intervalSec, startMode, debug):
         WSApp.__init__(self)
 
@@ -173,7 +173,43 @@ class App(WSApp):
         
         evm_SetTimeout(self.OnTimeout, timeoutMs)
         
+    # Handle transactions
+    def OnWSConnectIn(self, ws):
+        pass
     
+    def OnMessage(self, ws, msg):
+        Log("Got message")
+        ws.DumpMsg(msg)
+
+        if "MESSAGE_TYPE" in msg:
+            if msg["MESSAGE_TYPE"] == "DELETE_SPOT":
+                rowId = msg["ROW_ID"]
+                
+                Log("Requested to delete %s" % (rowId))
+                recDecoded = self.tDecoded.GetRecordAccessor()
+
+                Log("Looking up record")
+                recDecoded.SetRowId(rowId)
+                if recDecoded.ReadById():
+                    Log("Row found:")
+                    recDecoded.DumpVertical()
+                    recDecoded.Delete()
+                    Log("Record deleted")
+                else:
+                    Log("Row not found")
+
+                ws.Write({
+                    "MESSAGE_TYPE" : "DELETE_SPOT_ACK",
+                    "ROW_ID"       : rowId,
+                })
+            else:
+                Log("Unrecognized message type")
+        else:
+            Log("Unrecognized message")
+
+
+
+
 
 def Main():
     LogIncludeDate(True)

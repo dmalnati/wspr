@@ -24,6 +24,9 @@ class SpotApp extends libWS.WSEventHandler
         super();
         
         this.cfg = cfg;
+
+        // supplement the config
+        this.cfg.cbOnDeleteSpot = (rowId) => { this.OnDeleteSpotReqFromMap(rowId); };
         
         // Map App
         this.spotMap = new libSpotMap.SpotMap(this.cfg);
@@ -238,7 +241,6 @@ class SpotApp extends libWS.WSEventHandler
         AsyncAdd()
     }
 
-    
     ShowDialog()
     {
         this.dom.dialog.style.visibility = 'visible';
@@ -252,6 +254,35 @@ class SpotApp extends libWS.WSEventHandler
         
         Log(status);
     }
+
+
+
+    /////////////////////////////////////////////////////////////
+    //
+    // Spot Deleting
+    //
+    /////////////////////////////////////////////////////////////
+
+    OnDeleteSpotReqFromMap(rowId)
+    {
+        console.log("App Got delete req from map, requesting to server");
+
+        this.Write({
+            "MESSAGE_TYPE" : "DELETE_SPOT",
+            "ROW_ID"       : rowId,
+        });
+    }
+
+    OnDeleteSpotCmdFromServer(msg)
+    {
+        console.log("App Got delete cmd from server, telling map");
+
+        let rowId = msg["ROW_ID"];
+
+        this.spotMap.DeleteSpot(rowId);
+    }
+    
+
     
 
     
@@ -291,12 +322,22 @@ class SpotApp extends libWS.WSEventHandler
         }, 30000);
     }
 
-    OnHeartbeat()
+    Write(obj)
     {
         if (this.ws)
         {
-            this.ws.Write({"MESSAGE_TYPE" : "HEARTBEAT"});
+            this.ws.Write(obj);
         }
+        else
+        {
+            this.SetStatus("ERR Write Not Connected");
+            console.log(obj);
+        }
+    }
+
+    OnHeartbeat()
+    {
+        this.Write({"MESSAGE_TYPE" : "HEARTBEAT"});
 
         this.ScheduleNextHeartbeat();
     }
@@ -307,6 +348,15 @@ class SpotApp extends libWS.WSEventHandler
         if (!("MESSAGE_TYPE" in msg))
         {
             this.OnDataArrived(msg);
+        }
+        else
+        {
+            let msgType = msg["MESSAGE_TYPE"];
+
+            if (msgType == "DELETE_SPOT")
+            {
+                this.OnDeleteSpotCmdFromServer(msg);
+            }
         }
     }
     

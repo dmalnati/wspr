@@ -17,6 +17,11 @@ class Spot
         this.spotData = spotData;
     }
 
+    GetRowId()
+    {
+        return this.spotData['ROWID'];
+    }
+
     GetTime()
     {
         return this.spotData['TIME'];

@@ -1,4 +1,4 @@
-import { Log, Commas } from '/core/js/libUtl.js';
+import { ToDOM, Log, Commas } from '/core/js/libUtl.js';
 import * as libLoad from '/core/js/libLoad.js';
 
 
@@ -15,6 +15,7 @@ class SpotMap
     {
         this.cfg = cfg;
         this.idContainer = this.cfg.idMap;
+        this.cbOnDeleteSpot = this.cfg.cbOnDeleteSpot;
         
         // Initial state of map
         this.initialCenterLocation = { lat: 36.521387, lng: -76.303034 };
@@ -22,6 +23,9 @@ class SpotMap
         
         // hold all map elements regardless of other access routes
         this.mapElementList = [];
+
+        // hold all spots
+        this.spotList = [];
     }
     
     TrackMapElement(mapElement)
@@ -65,6 +69,7 @@ class SpotMap
     Reset()
     {
         // Keep state
+        this.spotList = [];
         this.reporterName__data = new Map();
         this.markerListRx = [];
         this.txDataList = [];
@@ -194,6 +199,8 @@ class SpotMap
     
     AddSpot(spot)
     {
+        this.spotList.push(spot);
+
         let reporterName = spot.GetReporter();
         
         // Maintain reporter data
@@ -351,13 +358,39 @@ class SpotMap
         
         this.SetInfoWindow(txData);
     }
-    
-    SetInfoWindow(txData, spot)
+
+    // Triggered from UI, request to delete spot
+    OnDeleteSpot(rowId)
+    {
+        console.log(`Map OnDeleteSpot(${rowId})`);
+
+        this.cbOnDeleteSpot(rowId);
+    }
+
+    // Command from external JS caller
+    DeleteSpot(rowId)
+    {
+        console.log(`Map DeleteSpot(${rowId})`);
+
+        // remove that rowid
+        let spotList = this.spotList.filter((spot, idx, arr) => {
+            return spot.GetRowId() != rowId;
+        });
+
+        // Reset and re-draw
+        this.Reset();
+
+        this.AddSpotList(spotList);
+    }
+
+
+    SetInfoWindow(txData)
     {
         let status = "";
         
         let spotFirst = txData.spotList[0];
         
+        status += "<div>";
         status += txData.txTime + "<br/>";
         status += `${spotFirst.GetSpeedMph()} MPH, ${Commas(spotFirst.GetAltitudeFt())} ft`;
         status += `, ${spotFirst.GetTemperatureF()} F, ${spotFirst.GetVoltage()/1000} V<br/>`;
@@ -420,7 +453,7 @@ class SpotMap
         status += "</style>";
 
         
-        status += "<tr><th>Reporter</th><th>DistanceMI</th><th>SNR</th><th>Freq</th><th>Drift</th></tr>";
+        status += "<tr><th>Reporter</th><th>DistanceMI</th><th>SNR</th><th>Freq</th><th>Drift</th><th>Del</th></tr>";
         for (let spot of spotList)
         {
             let distanceMiles = Math.round(this.CalcDistMilesBetween(spot.GetLocationTransmitter(), spot.GetLocationReporter()));
@@ -432,15 +465,32 @@ class SpotMap
             status += `<td style='text-align: right;'>${spot.GetSNR()}</td>`;
             status += `<td style='text-align: right;'>${spot.GetFrequency()}</td>`;
             status += `<td style='text-align: right;'>${spot.GetDrift()}</td>`;
+            status += `<td style='text-align: right;'><a href='#' data-rowid='${spot.GetRowId()}'>x</a></td>`;
             
             status += "</tr>";
         }
         status += "</table>";
         status += "</div>";
+        status += "</div>";
         
-        txData.infoWindow.setContent(status);
+        let statusDom = ToDOM(status);
+
+        // Add click handlers to delete spots
+        let linkList = statusDom.getElementsByTagName('a');
+        for (let link of linkList)
+        {
+            link.addEventListener('click', (e) => {
+                let linkDom = e.currentTarget;
+
+                let rowId = parseInt(linkDom.getAttribute('data-rowid'));
+
+                this.OnDeleteSpot(rowId)
+            });
+        }
+
+        txData.infoWindow.setContent(statusDom);
     }
-    
+
     // takes { lat: lat, lng: lng }
     CalcDistMilesBetween(point1, point2)
     {
