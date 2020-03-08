@@ -328,11 +328,6 @@ class SpotApp extends libWS.WSEventHandler
         {
             this.ws.Write(obj);
         }
-        else
-        {
-            this.SetStatus("ERR Write Not Connected");
-            console.log(obj);
-        }
     }
 
     OnHeartbeat()
