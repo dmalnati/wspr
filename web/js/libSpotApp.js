@@ -244,7 +244,14 @@ class SpotApp extends libWS.WSEventHandler
     ShowDialog()
     {
         this.dom.dialog.style.visibility = 'visible';
+        this.dom.dialog.close();
         this.dom.dialog.showModal();
+        this.dom.dialog.style.display = 'hidden';
+    }
+
+    HideDialog()
+    {
+        this.dom.dialog.close();
         this.dom.dialog.style.display = 'hidden';
     }
     
@@ -265,7 +272,7 @@ class SpotApp extends libWS.WSEventHandler
 
     OnDeleteSpotReqFromMap(rowId)
     {
-        console.log("App Got delete req from map, requesting to server");
+        Log("App Got delete req from map, requesting to server");
 
         this.Write({
             "MESSAGE_TYPE" : "DELETE_SPOT",
@@ -275,7 +282,7 @@ class SpotApp extends libWS.WSEventHandler
 
     OnDeleteSpotCmdFromServer(msg)
     {
-        console.log("App Got delete cmd from server, telling map");
+        Log("App Got delete cmd from server, telling map");
 
         let rowId = msg["ROW_ID"];
 
@@ -294,6 +301,8 @@ class SpotApp extends libWS.WSEventHandler
 
     OnConnect(ws)
     {
+        this.HideDialog();
+
         Log("Connection established, sending query");
         
         this.SetStatus("Querying");
@@ -362,6 +371,10 @@ class SpotApp extends libWS.WSEventHandler
         this.ShowDialog();
         
         this.ws = null;
+
+        Log("Was connected, became disconnected, trying re-connect immediately");
+        this.SetStatus("Re-Connecting");
+        setTimeout(() => { this.ReConnect(); }, 0);
     }
 
     OnError(ws)
@@ -372,6 +385,16 @@ class SpotApp extends libWS.WSEventHandler
         
         this.ws.Close();
         this.ws = null;
+
+        let retrySecs = 5;
+        Log(`Failed to connect, trying re-connect in ${retrySecs} secs`);
+        this.SetStatus("Re-Connecting");
+        setTimeout(() => { this.ReConnect(); }, retrySecs * 1000);
+    }
+
+    ReConnect()
+    {
+        this.dom.form.onsubmit();
     }
 }
 

@@ -278,11 +278,12 @@ self.write("<input id='callsign' name='callsign' value='%s' size='8' type='text'
 
 
 <dialog id='dialog'>
-    Connection to server lost
+    Connection to server lost<br/>
     <br/>
     <br/>
+    Auto re-connect in progress...
     <br/>
-    <button onclick='this.parentNode.close();'>OK</button>
+    <br/>
 </dialog>
 
     </body>

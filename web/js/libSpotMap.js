@@ -362,7 +362,7 @@ class SpotMap
     // Triggered from UI, request to delete spot
     OnDeleteSpot(rowId)
     {
-        console.log(`Map OnDeleteSpot(${rowId})`);
+        Log(`Map OnDeleteSpot(${rowId})`);
 
         this.cbOnDeleteSpot(rowId);
     }
@@ -370,7 +370,7 @@ class SpotMap
     // Command from external JS caller
     DeleteSpot(rowId)
     {
-        console.log(`Map DeleteSpot(${rowId})`);
+        Log(`Map DeleteSpot(${rowId})`);
 
         // remove that rowid
         let spotList = this.spotList.filter((spot, idx, arr) => {
