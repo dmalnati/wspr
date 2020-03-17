@@ -67,6 +67,8 @@ class WSPRDecoder:
             #if id == "00":
             #    retVal = "KD2KDD"
                 
+            if id == "06":
+                retVal = "KN4IUD"
             if id == "12":
                 retVal = "KD2KDD"
             if id == "Q4":
