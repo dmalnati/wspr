@@ -54,7 +54,7 @@ class WSPRDecoder:
         name__value["ALTITUDE_FT"]      = self.GetDecodedAltitudeFt(name__valueInput)
         name__value["GRID_DECODED"]     = self.GetDecodedGrid(name__valueInput)
         name__value["TEMPERATURE_C"]    = self.GetDecodedTemperatureC(name__value)
-        name__value["VOLTAGE"]          = self.GetDecodedVoltage(name__value)
+        name__value["VOLTAGE"]          = 0
         
         return name__value
         
@@ -103,19 +103,12 @@ class WSPRDecoder:
         return grid0to6
         
     def GetDecodedTemperatureC(self, name__value):
-        temperatureC, milliVolt = self.DecodeCallsign6(name__value)
+        temperatureC = self.DecodeCallsign6(name__value)
         
-        temperatureC = -50 + (temperatureC * 10)
+        temperatureC = -50 + (temperatureC * 4)
         
         return temperatureC
     
-    def GetDecodedVoltage(self, name__value):
-        temperatureC, milliVolt = self.DecodeCallsign6(name__value)
-        
-        milliVolt = 1500 + (milliVolt * 1500)
-        
-        return milliVolt
-
     def DecodePower(self, name__value):
         dbm = name__value["DBM"][1:]    ;# strip the +
         
@@ -146,10 +139,9 @@ class WSPRDecoder:
     def DecodeCallsign6(self, name__value):
         c6Val = self.UnMapFromAlphaSpace(name__value["CALLSIGN"][5])
         
-        milliVolt,    c6Val = self.UnPack(c6Val, 3)
-        temperatureC, c6Val = self.UnPack(c6Val, 8)
+        temperatureC, c6Val = self.UnPack(c6Val, 27)
         
-        return temperatureC, milliVolt
+        return temperatureC
         
         
     def UnMapFromAlphaNum(self, val):
